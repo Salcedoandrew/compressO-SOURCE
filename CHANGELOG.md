@@ -2,6 +2,12 @@
 
 ### Unreleased
 
+### 4.2.1
+
+Bug Fixes:
+
+- Fixed in-app update checks and their download links using the upstream repository; both now use this repository's latest release.
+
 ### 4.2.0
 
 Features:

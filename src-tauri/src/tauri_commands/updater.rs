@@ -60,7 +60,7 @@ async fn fetch_release_notes(current: &semver::Version, latest: &str) -> Result<
     // GitHub's API answers the file as it is (raw.githubusercontent.com can be very slow to reach
     // on some networks); it needs a User-Agent
     let url = format!(
-        "https://api.github.com/repos/codeforreal1/compressO/contents/CHANGELOG.md?ref={}",
+        "https://api.github.com/repos/Salcedoandrew/compressO-SOURCE/contents/CHANGELOG.md?ref={}",
         latest
     );
     let changelog = reqwest::Client::builder()
