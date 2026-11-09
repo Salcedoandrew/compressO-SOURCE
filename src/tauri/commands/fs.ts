@@ -38,12 +38,19 @@ export function getSvgDimension(imagePath: string): Promise<[number, number]> {
 export function moveFile(
   from: string,
   to: string,
-  { replaceOriginal }: { replaceOriginal?: string | null } = {},
+  {
+    replaceOriginal,
+    preserveTimesFrom,
+  }: {
+    replaceOriginal?: string | null
+    preserveTimesFrom?: string | null
+  } = {},
 ) {
   return core.invoke<string>('move_file', {
     from,
     to,
     replaceOriginal: replaceOriginal ?? null,
+    preserveTimesFrom: preserveTimesFrom ?? null,
   })
 }
 

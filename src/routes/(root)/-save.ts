@@ -12,6 +12,7 @@ import {
   moveFile,
 } from '@/tauri/commands/fs'
 import { Image, Video } from '@/types/app'
+import { markStoredBatchItem } from '@/utils/batchSession'
 import { formatBytes, getParentDirectory } from '@/utils/fs'
 import { getPresetOutput, savesAutomatically } from '@/utils/presetOutput'
 import { recordSavedOutput } from './-history'
@@ -99,6 +100,9 @@ async function saveCompressedMedia(
           replaceOriginal: settingsStore.replaceOriginalFiles
             ? mediaFile.pathRaw
             : null,
+          preserveTimesFrom: settingsStore.preserveFileDates
+            ? mediaFile.pathRaw
+            : null,
         },
       )
       savedLocations.add(location)
@@ -114,6 +118,7 @@ async function saveCompressedMedia(
         snapshot(appProxy).state.media[i].compressedFile ?? {},
         mediaFile.id,
       )
+      markStoredBatchItem(mediaFile.pathRaw, 'done')
     } catch (_) {
       failedCount++
       appProxy.state.media[i].compressedFile = {
@@ -280,6 +285,9 @@ export async function saveCompressedMediaWithPrompt(mediaIndex?: number) {
       replaceOriginal: settingsStore.replaceOriginalFiles
         ? mediaFile.pathRaw
         : null,
+      preserveTimesFrom: settingsStore.preserveFileDates
+        ? mediaFile.pathRaw
+        : null,
     })
     appProxy.state.media[index].compressedFile = {
       ...(snapshot(appProxy).state.media[index].compressedFile ?? {}),
@@ -319,7 +327,19 @@ export async function saveCompressedMediaWithPrompt(mediaIndex?: number) {
  * - pasted images, which only exist in the app's data folder (no original folder to save next to)
  * - outputs larger than their original, when "Skip larger outputs" is on
  */
-export async function autoSaveCompressedMedia() {
+let autoSaveTail: Promise<void> = Promise.resolve()
+
+/** Saves finished outputs, one run at a time, including saves started as each file finishes. */
+export function autoSaveCompressedMedia() {
+  const run = autoSaveTail.then(runAutoSave, runAutoSave)
+  autoSaveTail = run.then(
+    () => {},
+    () => {},
+  )
+  return run
+}
+
+async function runAutoSave() {
   const { saveLargerOutputs } = settingsStore
   // Each media is saved where its preset saves; those whose preset asks are left for the Save button
   if (
@@ -551,6 +571,9 @@ export async function saveQueueOutput(
         `${destinationDirectory}/${fileName}`,
         {
           replaceOriginal: replaceOriginalFiles ? output.sourcePath : null,
+          preserveTimesFrom: settingsStore.preserveFileDates
+            ? output.sourcePath
+            : null,
         },
       )
       return { savedPath }
@@ -562,6 +585,11 @@ export async function saveQueueOutput(
       const savedPath = await moveFile(
         output.outputPath,
         await join(await appDataDir(), 'assets', fileName),
+        {
+          preserveTimesFrom: settingsStore.preserveFileDates
+            ? output.sourcePath
+            : null,
+        },
       )
       return { savedPath }
     }

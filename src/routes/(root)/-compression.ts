@@ -21,6 +21,7 @@ import {
   planAudioTargetSize,
   supportsAudioTargetSize,
 } from '@/utils/audioTargetSize'
+import { type FitBox, fitInsideBox } from '@/utils/fitBox'
 import {
   getImageDynamicRangeOperation,
   isHdrJpegOutput,
@@ -36,6 +37,7 @@ import {
   planTargetSize,
   type TargetSizePlan,
 } from '@/utils/targetSize'
+import { parseLanguageList } from '@/utils/trackLanguages'
 import {
   getLongerSideDimensions,
   getTransformedDimensions,
@@ -343,26 +345,45 @@ export function getTargetSizeWarning(media: MediaFile) {
 function getImageOutputDimensions(
   v: Image,
   batchImageLongerSide: number | null,
+  batchFitBox?: FitBox | null,
 ): [number, number] | null {
-  if (v.config?.shouldEnableCustomDimensions && v.config.customDimensions) {
-    return [v.config.customDimensions[0], v.config.customDimensions[1]]
+  if (v.extension === 'svg' || v.config.convertToExtension === 'svg') {
+    return v.config?.shouldEnableCustomDimensions && v.config.customDimensions
+      ? [v.config.customDimensions[0], v.config.customDimensions[1]]
+      : null
   }
-  if (
-    !v.dimensions?.width ||
-    v.extension === 'svg' ||
-    v.config.convertToExtension === 'svg'
-  ) {
-    return null
-  }
-  return getLongerSideDimensions(
-    getTransformedDimensions(
-      v.dimensions,
-      v.config?.shouldTransformImage
-        ? v.config.transformImageConfig?.transformHistory
-        : null,
-    ),
-    batchImageLongerSide,
+  const sized =
+    v.config?.shouldEnableCustomDimensions && v.config.customDimensions
+      ? ([v.config.customDimensions[0], v.config.customDimensions[1]] as [
+          number,
+          number,
+        ])
+      : !v.dimensions?.width
+        ? null
+        : getLongerSideDimensions(
+            getTransformedDimensions(
+              v.dimensions,
+              v.config?.shouldTransformImage
+                ? v.config.transformImageConfig?.transformHistory
+                : null,
+            ),
+            batchImageLongerSide,
+          )
+  const box = v.isConfigDirty
+    ? (v.config.fitBox ?? null)
+    : (batchFitBox ?? v.config.fitBox ?? null)
+  if (!box || !v.dimensions?.width || !v.dimensions.height) return sized
+  const transformed = getTransformedDimensions(
+    v.dimensions,
+    v.config?.shouldTransformImage
+      ? v.config.transformImageConfig?.transformHistory
+      : null,
   )
+  const baseWidth = sized?.[0] ?? transformed.width
+  const baseHeight = sized?.[1] ?? transformed.height
+  const fitted = fitInsideBox(baseWidth, baseHeight, box)
+  if (!fitted) return sized
+  return [fitted.width, fitted.height]
 }
 
 /**
@@ -372,6 +393,7 @@ function getImageOutputDimensions(
 function getImageTargetSize(
   v: Image,
   batchImageLongerSide: number | null,
+  batchFitBox?: FitBox | null,
 ): ImageTargetSize | null {
   if (
     !v.config?.shouldUseTargetSize ||
@@ -379,7 +401,11 @@ function getImageTargetSize(
   ) {
     return null
   }
-  const outputDimensions = getImageOutputDimensions(v, batchImageLongerSide)
+  const outputDimensions = getImageOutputDimensions(
+    v,
+    batchImageLongerSide,
+    batchFitBox,
+  )
   const transformedDimensions = v.dimensions?.width
     ? getTransformedDimensions(
         v.dimensions,
@@ -406,15 +432,18 @@ function getImageTargetSize(
  * main window & the menu bar's queue.
  * - `batchVideoLongerSide` / `batchImageLongerSide`: the batch's resolution, for media without
  *   their own dimensions (`null` outside a batch)
+ * - `batchImageFitBox`: largest width and height for images that do not have their own
  */
 export function getMediaItemConfig(
   v: MediaFile,
   {
     batchVideoLongerSide,
     batchImageLongerSide,
+    batchImageFitBox = null,
   }: {
     batchVideoLongerSide: number | null
     batchImageLongerSide: number | null
+    batchImageFitBox?: FitBox | null
   },
 ): MediaItem {
   if (v.type === 'video' && v.isAudioFile) {
@@ -488,6 +517,7 @@ export function getMediaItemConfig(
                 (v.config?.audioConfig?.volume ?? 100) !== 0
                   ? (v.config?.selectedAudioTracks ?? null)
                   : null,
+              keepLanguages: parseLanguageList(v.config?.keepAudioLanguages),
             },
             dimensions: sizePlan?.isResolutionLowered
               ? sizePlan.dimensions
@@ -574,24 +604,31 @@ export function getMediaItemConfig(
                       }),
                     ) as VideoTrimSegment[])
                 : null,
-            subtitlesConfig:
-              (v.config?.subtitlesConfig?.shouldEnableSubtitles &&
-                v.config?.subtitlesConfig?.subtitles?.length > 0) ||
-              v.config?.subtitlesConfig?.preserveExistingSubtitles === true
-                ? {
-                    subtitles:
-                      v.config.subtitlesConfig?.subtitles?.map((s) => ({
-                        subtitlePath: s.subtitlePath ?? null,
-                        language: s.language || 'eng',
-                        fileName: s.fileName ?? null,
-                        title: s.title,
-                      })) ?? [],
-                    shouldEnableSubtitles:
-                      v.config.subtitlesConfig.shouldEnableSubtitles ?? false,
-                    preserveExistingSubtitles:
-                      v.config.subtitlesConfig.preserveExistingSubtitles,
-                  }
-                : null,
+            subtitlesConfig: (() => {
+              const keepLanguages = parseLanguageList(
+                v.config?.keepSubtitleLanguages,
+              )
+              const hasSubtitles =
+                (v.config?.subtitlesConfig?.shouldEnableSubtitles &&
+                  v.config?.subtitlesConfig?.subtitles?.length > 0) ||
+                v.config?.subtitlesConfig?.preserveExistingSubtitles === true
+              if (!hasSubtitles && keepLanguages.length === 0) return null
+              return {
+                subtitles:
+                  v.config?.subtitlesConfig?.subtitles?.map((s) => ({
+                    subtitlePath: s.subtitlePath ?? null,
+                    language: s.language || 'eng',
+                    fileName: s.fileName ?? null,
+                    title: s.title,
+                  })) ?? [],
+                shouldEnableSubtitles:
+                  v.config?.subtitlesConfig?.shouldEnableSubtitles ?? false,
+                preserveExistingSubtitles:
+                  v.config?.subtitlesConfig?.preserveExistingSubtitles ===
+                    true || keepLanguages.length > 0,
+                keepLanguages,
+              }
+            })(),
             // The backend applies it only when it matches the source & its output
             dynamicRange: v.isAudioFile
               ? null
@@ -614,13 +651,21 @@ export function getMediaItemConfig(
             svgConfig: v.config?.shouldEnableAdvancedSvgSetting
               ? (v.config.svgConfig ?? null)
               : null,
-            dimensions: getImageOutputDimensions(v, batchImageLongerSide),
+            dimensions: getImageOutputDimensions(
+              v,
+              batchImageLongerSide,
+              batchImageFitBox,
+            ),
             transformHistory: v.config?.shouldTransformImage
               ? (v.config.transformImageConfig?.transformHistory as
                   | MediaTransformHistory[]
                   | null)
               : null,
-            targetSize: getImageTargetSize(v, batchImageLongerSide),
+            targetSize: getImageTargetSize(
+              v,
+              batchImageLongerSide,
+              batchImageFitBox,
+            ),
           } satisfies ImageCompressionConfig)
         : undefined,
   }

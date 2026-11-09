@@ -214,7 +214,15 @@
           "placeholder": "접두사 없음",
           "description": "저장되는 파일 이름 앞에 추가되는 텍스트입니다. 원래 이름을 유지하려면 비워 두십시오."
         },
-        "appliesTo": "이 설정은 표준 프리셋에만 적용됩니다."
+        "appliesTo": "이 설정은 표준 프리셋에만 적용됩니다.",
+        "preserveDates": {
+          "title": "원래 날짜 유지",
+          "description": "저장된 파일에 원본의 만든 날짜와 수정한 날짜를 넣습니다. 원본 파일은 바뀌지 않습니다."
+        },
+        "imageConcurrency": {
+          "title": "한 번에 처리할 이미지",
+          "description": "동시에 압축할 이미지 수입니다. 동영상은 한 번에 하나입니다."
+        }
       },
       "clipboard": {
         "title": "클립보드",
@@ -442,7 +450,10 @@
       "svgScale": "SVG 배율 {{scale}}배",
       "customSvg": "사용자 지정 SVG 변환",
       "targetSize": "목표 크기 {{size}} MB",
-      "targetSizeImage": "목표 크기 {{size}}"
+      "targetSizeImage": "목표 크기 {{size}}",
+      "fitBox": "{{width}}×{{height}} 안에 맞추기",
+      "audioLanguages": "오디오 언어 {{languages}}",
+      "subtitleLanguages": "자막 언어 {{languages}}"
     },
     "save": {
       "title_video": "비디오 프리셋 저장",
@@ -466,7 +477,8 @@
     "output": {
       "location": "저장 위치",
       "followStandard": "표준 프리셋과 동일"
-    }
+    },
+    "photoDelivery": "사진 전달"
   },
   "dropZone": {
     "unsupportedType": "지원되지 않는 파일 형식입니다.",
@@ -862,7 +874,14 @@
     "dragAndDrop": "드래그 앤 드롭",
     "or": "또는",
     "clickToSelect": "클릭하여 미디어 선택",
-    "dropAnywhere": "아무 곳에나 드롭…"
+    "dropAnywhere": "아무 곳에나 드롭…",
+    "resume": {
+      "title": "끝내지 못한 묶음",
+      "description_other": "{{count}}개 파일이 끝나지 않았습니다. 다시 열 수 있습니다.",
+      "resume": "다시 시작",
+      "discard": "버리기",
+      "restored": "끝내지 못한 파일을 열었습니다. 준비되면 압축하세요."
+    }
   },
   "compression": {
     "cannotCancel": "지금은 압축을 취소할 수 없습니다.",
@@ -916,7 +935,20 @@
       "audio": "오디오",
       "others": "기타"
     },
-    "noAudio": "오디오를 찾을 수 없음"
+    "noAudio": "오디오를 찾을 수 없음",
+    "languages": {
+      "placeholder": "eng, spa",
+      "title": "언어 유지",
+      "description": "이 언어의 오디오와 자막만 남깁니다. 비워 두면 모두 남깁니다.",
+      "audio": "오디오 언어",
+      "subtitles": "자막 언어"
+    },
+    "fitBox": {
+      "title": "안에 맞추기",
+      "description": "이 크기보다 큰 이미지를 줄입니다. 더 작은 이미지는 원래 크기를 유지합니다.",
+      "width": "최대 너비",
+      "height": "최대 높이"
+    }
   },
   "quality": {
     "unsupportedAudio": "선택한 오디오 형식이나 코덱은 품질 조절을 지원하지 않습니다.",

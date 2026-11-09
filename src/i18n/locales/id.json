@@ -214,7 +214,15 @@
           "placeholder": "Tanpa awalan",
           "description": "Teks yang ditambahkan di awal nama file yang disimpan. Biarkan kosong untuk mempertahankan nama asli."
         },
-        "appliesTo": "Berlaku hanya untuk preset Standar."
+        "appliesTo": "Berlaku hanya untuk preset Standar.",
+        "preserveDates": {
+          "title": "Pertahankan tanggal asli",
+          "description": "Berkas yang disimpan mendapat tanggal dibuat dan diubah dari berkas asli. Berkas asli tidak diubah."
+        },
+        "imageConcurrency": {
+          "title": "Gambar sekaligus",
+          "description": "Berapa gambar yang dikompresi bersamaan. Video tetap satu per satu."
+        }
       },
       "clipboard": {
         "title": "Papan klip",
@@ -442,7 +450,10 @@
       "svgScale": "Skala SVG {{scale}}x",
       "customSvg": "Konversi SVG kustom",
       "targetSize": "Ukuran target {{size}} MB",
-      "targetSizeImage": "Ukuran target {{size}}"
+      "targetSizeImage": "Ukuran target {{size}}",
+      "fitBox": "Muat dalam {{width}}×{{height}}",
+      "audioLanguages": "Bahasa audio {{languages}}",
+      "subtitleLanguages": "Bahasa subtitle {{languages}}"
     },
     "save": {
       "title_video": "Simpan Preset Video",
@@ -466,7 +477,8 @@
     "output": {
       "location": "Lokasi penyimpanan",
       "followStandard": "Sama dengan preset Standar"
-    }
+    },
+    "photoDelivery": "Penyerahan foto"
   },
   "dropZone": {
     "unsupportedType": "Jenis file ini tidak didukung.",
@@ -862,7 +874,14 @@
     "dragAndDrop": "Seret & Taruh",
     "or": "Atau",
     "clickToSelect": "Klik untuk memilih media",
-    "dropAnywhere": "Taruh di mana saja…"
+    "dropAnywhere": "Taruh di mana saja…",
+    "resume": {
+      "title": "Batch yang belum selesai",
+      "description_other": "{{count}} berkas belum selesai. Berkas itu dapat dibuka lagi.",
+      "resume": "Lanjutkan",
+      "discard": "Buang",
+      "restored": "Berkas yang belum selesai telah dibuka. Kompres saat Anda siap."
+    }
   },
   "compression": {
     "cannotCancel": "Kompresi tidak dapat dibatalkan saat ini.",
@@ -916,7 +935,20 @@
       "audio": "Audio",
       "others": "Lainnya"
     },
-    "noAudio": "Audio tidak ditemukan"
+    "noAudio": "Audio tidak ditemukan",
+    "languages": {
+      "placeholder": "eng, spa",
+      "title": "Pertahankan bahasa",
+      "description": "Hanya simpan trek audio dan subtitle dalam bahasa ini. Kosongkan untuk menyimpan semuanya.",
+      "audio": "Bahasa audio",
+      "subtitles": "Bahasa subtitle"
+    },
+    "fitBox": {
+      "title": "Muat di dalam",
+      "description": "Perkecil gambar yang lebih besar dari ini. Gambar yang lebih kecil tetap ukuran aslinya.",
+      "width": "Lebar maksimum",
+      "height": "Tinggi maksimum"
+    }
   },
   "quality": {
     "unsupportedAudio": "Format atau codec audio yang dipilih tidak mendukung penyesuaian kualitas.",

@@ -214,7 +214,15 @@
           "placeholder": "Sem prefixo",
           "description": "Texto adicionado ao início do nome dos arquivos salvos. Deixe vazio para manter os nomes originais."
         },
-        "appliesTo": "Aplicam-se apenas à predefinição Padrão."
+        "appliesTo": "Aplicam-se apenas à predefinição Padrão.",
+        "preserveDates": {
+          "title": "Manter as datas originais",
+          "description": "Os ficheiros guardados recebem as datas de criação e modificação do original. O ficheiro original não é alterado."
+        },
+        "imageConcurrency": {
+          "title": "Imagens de cada vez",
+          "description": "Quantas imagens são comprimidas ao mesmo tempo. Os vídeos continuam um de cada vez."
+        }
       },
       "clipboard": {
         "title": "Área de transferência",
@@ -442,7 +450,10 @@
       "svgScale": "Escala SVG {{scale}}x",
       "customSvg": "Conversão SVG personalizada",
       "targetSize": "Tamanho alvo {{size}} MB",
-      "targetSizeImage": "Tamanho alvo {{size}}"
+      "targetSizeImage": "Tamanho alvo {{size}}",
+      "fitBox": "Ajustar dentro de {{width}}×{{height}}",
+      "audioLanguages": "Idiomas de áudio {{languages}}",
+      "subtitleLanguages": "Idiomas das legendas {{languages}}"
     },
     "save": {
       "title_video": "Salvar predefinição de vídeo",
@@ -466,7 +477,8 @@
     "output": {
       "location": "Local de salvamento",
       "followStandard": "Igual à predefinição Padrão"
-    }
+    },
+    "photoDelivery": "Entrega de fotos"
   },
   "dropZone": {
     "unsupportedType": "Este tipo de arquivo não é compatível.",
@@ -884,7 +896,16 @@
     "dragAndDrop": "Arraste e solte",
     "or": "Ou",
     "clickToSelect": "Clique para selecionar mídias",
-    "dropAnywhere": "Solte em qualquer lugar…"
+    "dropAnywhere": "Solte em qualquer lugar…",
+    "resume": {
+      "title": "Lote por terminar",
+      "description_one": "{{count}} ficheiro não foi concluído. Pode ser aberto de novo.",
+      "description_other": "{{count}} ficheiros não foram concluídos. Podem ser abertos de novo.",
+      "resume": "Retomar",
+      "discard": "Descartar",
+      "restored": "Os ficheiros por terminar foram abertos. Comprima-os quando estiver pronto.",
+      "description_many": "{{count}} ficheiros não foram concluídos. Podem ser abertos de novo."
+    }
   },
   "compression": {
     "cannotCancel": "Não é possível cancelar a compressão neste momento.",
@@ -944,7 +965,20 @@
       "audio": "Áudio",
       "others": "Outros"
     },
-    "noAudio": "Nenhum áudio encontrado"
+    "noAudio": "Nenhum áudio encontrado",
+    "languages": {
+      "placeholder": "eng, spa",
+      "title": "Manter idiomas",
+      "description": "Mantém só as faixas de áudio e legendas nestes idiomas. Deixe vazio para manter todas.",
+      "audio": "Idiomas de áudio",
+      "subtitles": "Idiomas das legendas"
+    },
+    "fitBox": {
+      "title": "Ajustar dentro",
+      "description": "Reduz as imagens maiores do que isto. As mais pequenas mantêm o tamanho original.",
+      "width": "Largura máxima",
+      "height": "Altura máxima"
+    }
   },
   "quality": {
     "unsupportedAudio": "O formato ou codec de áudio selecionado não permite ajustar a qualidade.",

@@ -1,4 +1,5 @@
 import Divider from '@/components/Divider'
+import KeepLanguages from './KeepLanguages'
 import Metadata from './Metadata'
 import Subtitles from './Subtitles'
 import VideoOnlySection from '../VideoOnlySection'
@@ -22,6 +23,7 @@ function Others({ mediaIndex, disableSubtitles, hideSubtitles }: OthersProps) {
           <Divider className="my-3" />
         </>
       ) : null}
+      <KeepLanguages mediaIndex={mediaIndex} />
       <Metadata mediaIndex={mediaIndex} />
     </div>
   )

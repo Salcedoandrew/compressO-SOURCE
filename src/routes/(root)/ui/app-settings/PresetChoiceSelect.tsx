@@ -10,6 +10,10 @@ import {
   type Preset,
   type PresetMediaType,
 } from '@/types/preset'
+import {
+  PHOTO_DELIVERY_PRESET_ID,
+  PHOTO_DELIVERY_PRESET_NAME,
+} from '@/utils/photoDelivery'
 import { getPresetChoice } from '@/utils/presetOutput'
 import { getPresets } from '../../-presets'
 
@@ -32,9 +36,14 @@ function PresetChoiceSelect(props: PresetChoiceSelectProps) {
   const { t } = useTranslation()
   const { presets, defaultPresetIds } = useSnapshot(presetsStore)
   const options = getPresets(mediaType, presets as Preset[])
+  const defaultPreset =
+    options.find((preset) => preset.id === defaultPresetIds[mediaType]) ??
+    options[0]
   const defaultPresetName =
-    options.find((preset) => preset.id === defaultPresetIds[mediaType])?.name ??
-    options[0].name
+    defaultPreset.id === PHOTO_DELIVERY_PRESET_ID &&
+    defaultPreset.name === PHOTO_DELIVERY_PRESET_NAME
+      ? t('presets.photoDelivery')
+      : defaultPreset.name
 
   return (
     <Select
@@ -53,7 +62,12 @@ function PresetChoiceSelect(props: PresetChoiceSelectProps) {
         },
         ...options,
       ].map((preset) => (
-        <SelectItem key={preset.id}>{preset.name}</SelectItem>
+        <SelectItem key={preset.id}>
+          {preset.id === PHOTO_DELIVERY_PRESET_ID &&
+          preset.name === PHOTO_DELIVERY_PRESET_NAME
+            ? t('presets.photoDelivery')
+            : preset.name}
+        </SelectItem>
       ))}
     </Select>
   )

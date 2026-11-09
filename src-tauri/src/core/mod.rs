@@ -2,6 +2,7 @@ pub mod domain;
 pub mod ffmpeg;
 pub mod ffprobe;
 pub mod hardware_encoder;
+pub mod languages;
 pub mod image;
 pub mod image_info;
 pub mod image_dynamic_range;

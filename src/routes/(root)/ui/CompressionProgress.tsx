@@ -12,6 +12,7 @@ import {
 import { formatBytes, getOutputFileName } from '@/utils/fs'
 import { convertDurationToMilliseconds } from '@/utils/string'
 import { getOutputDuration, getOutputOptions, MediaFile } from '../-compression'
+import { autoSaveCompressedMedia } from '../-save'
 import { appProxy } from '../-state'
 
 async function updateDockProgress() {
@@ -183,6 +184,8 @@ function CompressionProgress() {
                   if (appProxy.state.media.length > 1) {
                     appProxy.takeSnapshot('batchCompressionStep')
                   }
+                  // Save as each file finishes, so a quit or crash keeps what is already written.
+                  autoSaveCompressedMedia().catch(() => {})
 
                   const allMediaCompleted = snapshot(
                     appProxy,

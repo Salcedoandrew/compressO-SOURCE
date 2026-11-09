@@ -28,6 +28,7 @@ import type {
   VideoDynamicRangeConfig,
   VideoDynamicRangeInfo,
 } from '@/types/videoDynamicRange'
+import type { FitBox } from '@/utils/fitBox'
 
 export type MediaMetadataConfig = {
   title?: string | null
@@ -50,6 +51,8 @@ export type AudioConfig = {
   bitrate?: number | null
   audioCodec?: string | null
   selectedAudioTracks?: readonly number[] | null
+  /** Keep only these audio languages. Empty keeps the track selection, or every track. */
+  keepLanguages?: string[] | null
 }
 
 export type SubtitleConfig = {
@@ -64,6 +67,8 @@ export type SubtitlesConfig = {
   shouldEnableSubtitles?: boolean
   preserveExistingSubtitles?: boolean
   title?: string | null
+  /** Keep only subtitle tracks in these languages. Empty keeps every track. */
+  keepLanguages?: string[] | null
 }
 
 export type VideoConfig = {
@@ -117,6 +122,10 @@ export type VideoConfig = {
   customSpeed?: number | null
   /** HDR Boost or Remove HDR, applied only to the videos it matches (see `videoDynamicRange.ts`) */
   dynamicRange?: VideoDynamicRangeConfig
+  /** Comma-separated languages whose audio tracks are kept. Empty keeps every track. */
+  keepAudioLanguages?: string | null
+  /** Comma-separated languages whose subtitle tracks are kept. Empty keeps every track. */
+  keepSubtitleLanguages?: string | null
   /**
    * Transforms of all videos of a batch (set on the batch config only, by a preset); each video's
    * own crop is computed from its size
@@ -243,6 +252,11 @@ export type ImageConfig = {
    * own crop is computed from its size
    */
   batchTransform?: PortableTransform | null
+  /**
+   * Largest width and height. Larger images are shrunk to fit; smaller ones stay
+   * their size (see `utils/fitBox.ts`)
+   */
+  fitBox?: FitBox | null
   /** Image preset the settings come from (see `src/types/preset.ts`) */
   presetId?: string
   /** Preset settings that could not be applied to this image (e.g. the format of a GIF) */

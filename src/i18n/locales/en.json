@@ -214,7 +214,15 @@
           "placeholder": "No prefix",
           "description": "Text added to the start of saved file names. Leave empty to keep the original names."
         },
-        "appliesTo": "These apply to the Standard preset only."
+        "appliesTo": "These apply to the Standard preset only.",
+        "preserveDates": {
+          "title": "Keep original dates",
+          "description": "Give saved files the original file's created and modified dates. The original file is not changed."
+        },
+        "imageConcurrency": {
+          "title": "Images at once",
+          "description": "How many images are compressed at the same time. Videos stay one at a time."
+        }
       },
       "clipboard": {
         "title": "Clipboard",
@@ -442,7 +450,10 @@
       "svgScale": "SVG scale {{scale}}x",
       "customSvg": "Custom SVG conversion",
       "targetSize": "Target size {{size}} MB",
-      "targetSizeImage": "Target size {{size}}"
+      "targetSizeImage": "Target size {{size}}",
+      "fitBox": "Fit inside {{width}}×{{height}}",
+      "audioLanguages": "Audio languages {{languages}}",
+      "subtitleLanguages": "Subtitle languages {{languages}}"
     },
     "save": {
       "title_video": "Save Video Preset",
@@ -466,7 +477,8 @@
     "output": {
       "location": "Save location",
       "followStandard": "Same as the Standard preset"
-    }
+    },
+    "photoDelivery": "Photo delivery"
   },
   "dropZone": {
     "unsupportedType": "This file type is not supported.",
@@ -873,7 +885,15 @@
     "dragAndDrop": "Drag & Drop",
     "or": "Or",
     "clickToSelect": "Click to select media",
-    "dropAnywhere": "Drop anywhere..."
+    "dropAnywhere": "Drop anywhere...",
+    "resume": {
+      "title": "Unfinished batch",
+      "description_one": "{{count}} file was not finished. It can be opened again.",
+      "description_other": "{{count}} files were not finished. They can be opened again.",
+      "resume": "Resume",
+      "discard": "Discard",
+      "restored": "The unfinished files were opened. Compress them when you are ready."
+    }
   },
   "compression": {
     "cannotCancel": "Cannot cancel compression at this point.",
@@ -930,7 +950,20 @@
       "audio": "Audio",
       "others": "Others"
     },
-    "noAudio": "No audio found"
+    "noAudio": "No audio found",
+    "languages": {
+      "placeholder": "eng, spa",
+      "title": "Keep languages",
+      "description": "Only keep audio and subtitle tracks in these languages. Leave empty to keep every track.",
+      "audio": "Audio languages",
+      "subtitles": "Subtitle languages"
+    },
+    "fitBox": {
+      "title": "Fit inside",
+      "description": "Shrink images that are larger than this. Smaller images stay their original size.",
+      "width": "Max width",
+      "height": "Max height"
+    }
   },
   "quality": {
     "unsupportedAudio": "The selected audio format or codec does not support quality adjustment.",
