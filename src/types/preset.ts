@@ -1,4 +1,5 @@
 import type { SaveLocation } from '@/stores/settingsStore'
+import type { FitBox } from '@/utils/fitBox'
 import type { AudioConfig, ImageConfig, VideoConfig } from './app'
 import type { PortableTransform } from './compression'
 
@@ -25,6 +26,8 @@ export const videoPresetFields = [
   'shouldEnableCustomBitrate',
   'audioConfig',
   'dynamicRange',
+  'keepAudioLanguages',
+  'keepSubtitleLanguages',
 ] as const satisfies readonly (keyof VideoConfig)[]
 
 export type VideoPresetField = (typeof videoPresetFields)[number]
@@ -75,6 +78,11 @@ export type ImagePresetSettings = Pick<ImageConfig, ImagePresetField> & {
   resolution: number | null
   /** See `VideoPresetSettings['transform']` */
   transform: PortableTransform | null
+  /**
+   * Largest width and height. Images that already fit are not enlarged.
+   * `null` does not limit the size.
+   */
+  fitBox: FitBox | null
 }
 
 /** Any setting of an image preset, including the resolution */

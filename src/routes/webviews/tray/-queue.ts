@@ -285,12 +285,16 @@ async function compressQueueItem(item: DropQueueItem) {
     // Compressed at its quality settings when those fit its target size (see `-sizeEstimate.ts`)
     await estimateTargetSizeVideos([media], null)
     // The queue item's id is the batch's, so its progress & cancellation are its own
-    const { results } = await compressMediaBatch(item.id, [
-      getMediaItemConfig(media, {
-        batchVideoLongerSide: null,
-        batchImageLongerSide: null,
-      }),
-    ])
+    const { results } = await compressMediaBatch(
+      item.id,
+      [
+        getMediaItemConfig(media, {
+          batchVideoLongerSide: null,
+          batchImageLongerSide: null,
+        }),
+      ],
+      settingsStore.imageConcurrency,
+    )
     const outputMetadata = results[media.id!]?.fileMetadata
     if (!outputMetadata?.path) throw new Error('No output')
     // Cancelled just as it finished: the output is not kept

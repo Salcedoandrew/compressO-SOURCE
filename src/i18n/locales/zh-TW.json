@@ -214,7 +214,15 @@
           "placeholder": "無前綴",
           "description": "加在儲存檔名開頭的文字。留空則保留原始檔名。"
         },
-        "appliesTo": "這些設定僅適用於標準預設。"
+        "appliesTo": "這些設定僅適用於標準預設。",
+        "preserveDates": {
+          "title": "保留原始日期",
+          "description": "儲存的檔案會使用原始檔案的建立時間與修改時間。原始檔案不會被更改。"
+        },
+        "imageConcurrency": {
+          "title": "同時處理的影像",
+          "description": "同時壓縮多少張影像。影片仍然一次一個。"
+        }
       },
       "clipboard": {
         "title": "剪貼簿",
@@ -442,7 +450,10 @@
       "svgScale": "SVG 縮放 {{scale}} 倍",
       "customSvg": "自訂 SVG 轉換",
       "targetSize": "目標大小 {{size}} MB",
-      "targetSizeImage": "目標大小 {{size}}"
+      "targetSizeImage": "目標大小 {{size}}",
+      "fitBox": "限制在 {{width}}×{{height}}",
+      "audioLanguages": "音軌語言 {{languages}}",
+      "subtitleLanguages": "字幕語言 {{languages}}"
     },
     "save": {
       "title_video": "儲存影片預設",
@@ -466,7 +477,8 @@
     "output": {
       "location": "儲存位置",
       "followStandard": "與標準預設相同"
-    }
+    },
+    "photoDelivery": "照片交付"
   },
   "dropZone": {
     "unsupportedType": "不支援此檔案類型。",
@@ -862,7 +874,14 @@
     "dragAndDrop": "拖放",
     "or": "或",
     "clickToSelect": "按一下以選擇媒體",
-    "dropAnywhere": "拖放到任意位置…"
+    "dropAnywhere": "拖放到任意位置…",
+    "resume": {
+      "title": "未完成的批次",
+      "description_other": "{{count}} 個檔案尚未完成。可以再次開啟。",
+      "resume": "繼續",
+      "discard": "捨棄",
+      "restored": "已開啟未完成的檔案。準備好後即可壓縮。"
+    }
   },
   "compression": {
     "cannotCancel": "目前無法取消壓縮。",
@@ -916,7 +935,20 @@
       "audio": "音訊",
       "others": "其他"
     },
-    "noAudio": "找不到音訊"
+    "noAudio": "找不到音訊",
+    "languages": {
+      "placeholder": "eng, spa",
+      "title": "保留語言",
+      "description": "只保留這些語言的音軌和字幕。留空則全部保留。",
+      "audio": "音軌語言",
+      "subtitles": "字幕語言"
+    },
+    "fitBox": {
+      "title": "限制在框內",
+      "description": "縮小超過這個尺寸的影像。較小的影像保持原尺寸。",
+      "width": "最大寬度",
+      "height": "最大高度"
+    }
   },
   "quality": {
     "unsupportedAudio": "所選音訊格式或編解碼器不支援調整品質。",

@@ -182,6 +182,7 @@ export function pickImagePresetSettings(
     config.shouldTransformImage,
     config.transformImageConfig,
   )
+  settings.fitBox = config.fitBox ?? null
   return settings as ImagePresetSettings
 }
 
@@ -567,6 +568,7 @@ export function applyImagePresetToConfig(
     nextConfig.customDimensions = customDimensions ?? undefined
   }
 
+  nextConfig.fitBox = settings.fitBox ?? null
   nextConfig.presetId = preset.id
   nextConfig.presetSkippedFields = [...skippedFields]
   return nextConfig
@@ -1351,6 +1353,20 @@ export function describeVideoPresetSettings(
       ? translate('presets.summary.metadataRemoved')
       : translate('presets.summary.metadataKept'),
   )
+  if (settings.keepAudioLanguages) {
+    lines.push(
+      translate('presets.summary.audioLanguages', {
+        languages: settings.keepAudioLanguages,
+      }),
+    )
+  }
+  if (settings.keepSubtitleLanguages) {
+    lines.push(
+      translate('presets.summary.subtitleLanguages', {
+        languages: settings.keepSubtitleLanguages,
+      }),
+    )
+  }
   return lines
 }
 
@@ -1374,6 +1390,14 @@ export function describeImagePresetSettings(
   if (settings.resolution) {
     lines.push(
       translate('presets.summary.resolution', { size: settings.resolution }),
+    )
+  }
+  if (settings.fitBox?.maxWidth || settings.fitBox?.maxHeight) {
+    lines.push(
+      translate('presets.summary.fitBox', {
+        width: settings.fitBox.maxWidth ?? '—',
+        height: settings.fitBox.maxHeight ?? '—',
+      }),
     )
   }
   lines.push(...describeTransform(settings.transform, translate))

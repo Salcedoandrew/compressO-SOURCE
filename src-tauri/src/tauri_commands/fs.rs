@@ -51,13 +51,19 @@ pub async fn move_file(
     from: &str,
     to: &str,
     replace_original: Option<String>,
+    preserve_times_from: Option<String>,
 ) -> Result<String, String> {
+    // Read the original's dates before anything is moved. The output is the only file written.
+    let times = preserve_times_from
+        .as_deref()
+        .filter(|path| is_safe_times_source(path))
+        .and_then(read_file_times);
     let requested = PathBuf::from(to);
     if let Some(original) = replace_original {
         if is_same_file(&requested, Path::new(&original)).await {
             // Not moved at all on an error, so it is saved as usual below
             match replace_file(from, &requested).await {
-                Ok(saved_path) => return Ok(allow_saved_file(&app_handle, &saved_path)),
+                Ok(saved_path) => return Ok(finish_save(&app_handle, &saved_path, times.as_ref())),
                 Err(err) => log::error!(
                     "[save] Could not move the output beside {}: {}",
                     requested.display(),
@@ -93,7 +99,69 @@ pub async fn move_file(
         );
         return Err(err.to_string());
     }
-    Ok(allow_saved_file(&app_handle, &to))
+    Ok(finish_save(&app_handle, &to, times.as_ref()))
+}
+
+struct CopiedFileTimes {
+    accessed: std::time::SystemTime,
+    modified: std::time::SystemTime,
+    created: Option<std::time::SystemTime>,
+}
+
+/// An absolute path with no NUL. Dates are read from it and never written back to it.
+fn is_safe_times_source(path: &str) -> bool {
+    !path.is_empty() && !path.contains('\0') && Path::new(path).is_absolute()
+}
+
+fn read_file_times(path: &str) -> Option<CopiedFileTimes> {
+    let metadata = std::fs::metadata(path).ok()?;
+    if !metadata.is_file() {
+        return None;
+    }
+    let modified = metadata.modified().ok()?;
+    Some(CopiedFileTimes {
+        accessed: metadata.accessed().unwrap_or(modified),
+        modified,
+        created: metadata.created().ok(),
+    })
+}
+
+fn apply_file_times(path: &Path, times: &CopiedFileTimes) -> std::io::Result<()> {
+    let file = std::fs::OpenOptions::new().write(true).open(path)?;
+    // Creation time can be set on macOS and Windows. Other systems keep the modified time.
+    let file_times = with_created_time(
+        std::fs::FileTimes::new()
+            .set_accessed(times.accessed)
+            .set_modified(times.modified),
+        times.created,
+    );
+    file.set_times(file_times)
+}
+
+fn with_created_time(
+    times: std::fs::FileTimes,
+    created: Option<std::time::SystemTime>,
+) -> std::fs::FileTimes {
+    #[cfg(any(windows, target_os = "macos"))]
+    if let Some(created) = created {
+        return times.set_created(created);
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    let _ = created;
+    times
+}
+
+fn finish_save(app_handle: &AppHandle, saved: &PathBuf, times: Option<&CopiedFileTimes>) -> String {
+    if let Some(times) = times {
+        if let Err(err) = apply_file_times(saved, times) {
+            log::warn!(
+                "[save] Could not keep the original dates on {}: {}",
+                saved.display(),
+                err
+            );
+        }
+    }
+    allow_saved_file(app_handle, saved)
 }
 
 /// Moves `from` to `to`, which must not exist: an instant rename on the same drive, otherwise a copy
@@ -446,4 +514,52 @@ pub fn allow_asset_scopes(
     }
 
     Ok(all_files)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{apply_file_times, is_safe_times_source, read_file_times};
+    use std::io::Write;
+    use std::time::{Duration, SystemTime};
+
+    #[test]
+    fn relative_paths_are_not_date_sources() {
+        assert!(!is_safe_times_source("photo.jpg"));
+        assert!(!is_safe_times_source(""));
+        assert!(!is_safe_times_source("/tmp/bad\0.jpg"));
+        assert!(is_safe_times_source("/tmp/photo.jpg"));
+    }
+
+    #[test]
+    fn copied_dates_match_the_source_and_leave_it_unchanged() {
+        let dir = std::env::temp_dir().join(format!("compresso-dates-{}", nanoid::nanoid!()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let source = dir.join("original.jpg");
+        let output = dir.join("compressed.jpg");
+        std::fs::File::create(&source).unwrap();
+        let mut output_file = std::fs::File::create(&output).unwrap();
+        output_file.write_all(b"out").unwrap();
+        let earlier = SystemTime::now() - Duration::from_secs(86_400);
+        let times = std::fs::FileTimes::new()
+            .set_accessed(earlier)
+            .set_modified(earlier);
+        std::fs::File::options()
+            .write(true)
+            .open(&source)
+            .unwrap()
+            .set_times(times)
+            .unwrap();
+        let source_modified = std::fs::metadata(&source).unwrap().modified().unwrap();
+        let copied = read_file_times(source.to_str().unwrap()).unwrap();
+        apply_file_times(&output, &copied).unwrap();
+        let output_modified = std::fs::metadata(&output).unwrap().modified().unwrap();
+        let source_after = std::fs::metadata(&source).unwrap().modified().unwrap();
+        assert_eq!(source_after, source_modified);
+        let drift = output_modified
+            .duration_since(source_modified)
+            .or_else(|_| source_modified.duration_since(output_modified))
+            .unwrap();
+        assert!(drift < Duration::from_secs(2));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

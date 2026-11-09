@@ -53,7 +53,7 @@ pub enum DropQueueItemStatus {
     Cancelled,
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DropQueueItem {
     pub id: String,
@@ -198,7 +198,8 @@ fn update_queue(app_handle: &AppHandle, update: impl FnOnce(&mut Vec<DropQueueIt
     }
     // To the command line jobs waiting on their media (see `cli_server`)
     let _ = queue_channel().send(items.clone());
-    let _ = app_handle.emit(DROP_QUEUE_EVENT, items);
+    let _ = app_handle.emit(DROP_QUEUE_EVENT, &items);
+    save_queue(app_handle, &items);
 }
 
 /// Sends the whole queue each time it changes, to whoever listens (see `subscribe`)
@@ -264,7 +265,11 @@ fn show_queue_progress(app_handle: &AppHandle, items: &[DropQueueItem]) {
 
 /// Adds media to the end of the queue (folders are added as the media they contain), in order.
 /// Media already waiting or being compressed is not added again.
-pub fn add_to_queue(app_handle: &AppHandle, paths: Vec<String>, is_supported: impl Fn(&str) -> bool) {
+pub fn add_to_queue(
+    app_handle: &AppHandle,
+    paths: Vec<String>,
+    is_supported: impl Fn(&str) -> bool,
+) {
     add_to_queue_from(app_handle, paths, is_supported, None);
 }
 
@@ -537,5 +542,142 @@ fn cancel_items(app_handle: &AppHandle, matches: impl Fn(&DropQueueItem) -> bool
             // See `CancelInProgressCompressionPayload`
             serde_json::json!({ "ids": compressing_ids }),
         );
+    }
+}
+
+fn queue_file(app: &AppHandle) -> Option<std::path::PathBuf> {
+    app.path()
+        .app_data_dir()
+        .ok()
+        .map(|dir| dir.join("queue.json"))
+}
+
+fn is_safe_queue_path(path: &str) -> bool {
+    !path.is_empty() && !path.contains('\0') && std::path::Path::new(path).is_absolute()
+}
+
+/// Jobs that were compressing when the app stopped wait again. Their partial output path is
+/// forgotten and never deleted: a path read back from disk is not trusted as a delete target.
+pub fn resume_interrupted(items: Vec<DropQueueItem>) -> Vec<DropQueueItem> {
+    let batch_id = nanoid!();
+    items
+        .into_iter()
+        .filter_map(|mut item| {
+            if !is_safe_queue_path(&item.path) {
+                log::warn!("[drop-queue] Dropping a stored item whose path is not absolute");
+                return None;
+            }
+            if matches!(
+                item.status,
+                DropQueueItemStatus::Waiting | DropQueueItemStatus::Compressing
+            ) {
+                if item.status == DropQueueItemStatus::Compressing {
+                    item.status = DropQueueItemStatus::Waiting;
+                    item.progress = 0.0;
+                    item.output_path = None;
+                }
+                item.batch_id = batch_id.clone();
+            }
+            Some(item)
+        })
+        .collect()
+}
+
+fn save_queue(app: &AppHandle, items: &[DropQueueItem]) {
+    let Some(path) = queue_file(app) else {
+        return;
+    };
+    let Ok(text) = serde_json::to_string(items) else {
+        return;
+    };
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    let temp = path.with_extension("json.tmp");
+    if std::fs::write(&temp, text).is_err() {
+        return;
+    }
+    if std::fs::rename(&temp, &path).is_err() {
+        let _ = std::fs::remove_file(&temp);
+    }
+}
+
+/// Loads the queue left by the last run. Safe to call once the app data folder exists.
+pub fn restore(app: &AppHandle) {
+    let Some(path) = queue_file(app) else {
+        return;
+    };
+    let Ok(text) = std::fs::read_to_string(&path) else {
+        return;
+    };
+    let Ok(items) = serde_json::from_str::<Vec<DropQueueItem>>(&text) else {
+        log::warn!("[drop-queue] Ignoring a queue file that could not be read");
+        return;
+    };
+    let items = resume_interrupted(items);
+    for item in &items {
+        QUEUE_ORDER.fetch_max(item.queue_order.saturating_add(1), Ordering::SeqCst);
+    }
+    let Some(state) = app.try_state::<DropQueueState>() else {
+        return;
+    };
+    if let Ok(mut guard) = state.0.lock() {
+        *guard = items;
+    };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{resume_interrupted, DropQueueItem, DropQueueItemStatus};
+
+    fn item(path: &str, status: DropQueueItemStatus) -> DropQueueItem {
+        DropQueueItem {
+            id: "id".into(),
+            path: path.into(),
+            relative_dir: String::new(),
+            group_id: "group".into(),
+            batch_id: "old".into(),
+            status,
+            queue_order: 4,
+            progress: 40.0,
+            original_size: None,
+            output_size: None,
+            saved_path: None,
+            output_path: Some("/tmp/partial".into()),
+            message: None,
+            is_access_denied: false,
+            needs_save_location: false,
+            watch_folder_id: None,
+            watch_folder_name: None,
+            cli_job: None,
+            reason: None,
+            error: None,
+        }
+    }
+
+    #[test]
+    fn interrupted_job_waits_again_without_its_partial_output() {
+        let [job] = resume_interrupted(vec![item(
+            "/videos/clip.mp4",
+            DropQueueItemStatus::Compressing,
+        )])
+        .try_into()
+        .unwrap();
+        assert_eq!(job.status, DropQueueItemStatus::Waiting);
+        assert_eq!(job.progress, 0.0);
+        assert!(job.output_path.is_none());
+        assert_ne!(job.batch_id, "old");
+    }
+
+    #[test]
+    fn relative_and_empty_paths_are_dropped() {
+        let kept = resume_interrupted(vec![
+            item("clip.mp4", DropQueueItemStatus::Waiting),
+            item("", DropQueueItemStatus::Waiting),
+            item("/videos/keep.mp4", DropQueueItemStatus::Done),
+        ]);
+        assert_eq!(kept.len(), 1);
+        assert_eq!(kept[0].path, "/videos/keep.mp4");
+        assert_eq!(kept[0].status, DropQueueItemStatus::Done);
     }
 }

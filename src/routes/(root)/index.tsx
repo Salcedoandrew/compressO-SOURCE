@@ -16,6 +16,7 @@ import DragAndDropFiles from './ui/DragAndDropFiles'
 import MediaConfig from './ui/MediaConfig'
 import OpenWithApp from './ui/OpenWithApp'
 import ReadFilesFromClipboard from './ui/ReadFilesFromClipboard'
+import ResumeBatch from './ui/ResumeBatch'
 
 export const Route = createFileRoute('/(root)/')({
   component: Root,
@@ -90,6 +91,7 @@ function Root() {
         </div>
       </motion.div>
       <Setting />
+      <ResumeBatch />
     </Layout>
   )
 

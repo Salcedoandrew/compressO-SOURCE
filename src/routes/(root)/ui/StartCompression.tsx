@@ -19,6 +19,10 @@ import {
   getBatchResolutionLongerSide,
   MediaBatchCompressionResult,
 } from '@/types/compression'
+import {
+  beginStoredBatchSession,
+  clearStoredBatchSession,
+} from '@/utils/batchSession'
 import { formatBytes, getOutputFileName } from '@/utils/fs'
 import CancelCompression from './CancelCompression'
 import PauseCompression from './PauseCompression'
@@ -177,6 +181,25 @@ function StartCompression() {
           ? (appSnapshot.state.commonConfigForBatchCompression.imageConfig
               .batchLongerSide ?? null)
           : null
+      const batchImageFitBox =
+        appSnapshot.state.media.length > 1
+          ? (appSnapshot.state.commonConfigForBatchCompression.imageConfig
+              .fitBox ?? null)
+          : null
+      beginStoredBatchSession(
+        appSnapshot.state.media.flatMap((mediaFile) =>
+          mediaFile.pathRaw
+            ? [
+                {
+                  path: mediaFile.pathRaw,
+                  relativeDir: mediaFile.relativeDir ?? '',
+                  presetId: mediaFile.config?.presetId ?? null,
+                  status: 'pending' as const,
+                },
+              ]
+            : [],
+        ),
+      )
 
       // Cancelling (also while waiting for the drop zone) stops waiting for the compression
       const cancellation = new Promise<never>((_, reject) => {
@@ -256,8 +279,10 @@ function StartCompression() {
             getMediaItemConfig(v as MediaFile, {
               batchVideoLongerSide,
               batchImageLongerSide,
+              batchImageFitBox,
             }),
           ),
+          settingsStore.imageConcurrency,
         ),
         cancellation,
       ])) as MediaBatchCompressionResult
@@ -278,8 +303,11 @@ function StartCompression() {
           const videoResult = results[video.id!] || null
 
           appProxy.state.media[index].isProcessCompleted = true
+          const previousVideoFile = appProxy.state.media[index].compressedFile
           appProxy.state.media[index].compressedFile = {
             isSuccessful: !(videoResult == null),
+            isSaved: previousVideoFile?.isSaved,
+            savedPath: previousVideoFile?.savedPath,
             fileName: videoResult?.fileMetadata?.fileName ?? video.fileName,
             fileNameToDisplay: getOutputFileName(
               video.fileName,
@@ -299,8 +327,11 @@ function StartCompression() {
           const imageResult = results[image.id!] || null
 
           appProxy.state.media[index].isProcessCompleted = true
+          const previousImageFile = appProxy.state.media[index].compressedFile
           appProxy.state.media[index].compressedFile = {
             isSuccessful: !(imageResult == null),
+            isSaved: previousImageFile?.isSaved,
+            savedPath: previousImageFile?.savedPath,
             fileName: imageResult?.fileName ?? image.fileName,
             fileNameToDisplay: getOutputFileName(
               image.fileName,
@@ -332,6 +363,7 @@ function StartCompression() {
       // Once saved automatically, so the saved outputs are recorded where they were saved
       recordMainWindowHistory(batchId)
       await autoCopyCompressedMediaToClipboard()
+      clearStoredBatchSession()
     } catch (error) {
       if (error !== 'CANCELLED') {
         toast.error(t('compression.failed'))

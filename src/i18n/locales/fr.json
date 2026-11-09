@@ -214,7 +214,15 @@
           "placeholder": "Aucun préfixe",
           "description": "Texte ajouté au début du nom des fichiers enregistrés. Laissez vide pour conserver les noms d’origine."
         },
-        "appliesTo": "Ces réglages s’appliquent uniquement au préréglage Standard."
+        "appliesTo": "Ces réglages s’appliquent uniquement au préréglage Standard.",
+        "preserveDates": {
+          "title": "Conserver les dates d'origine",
+          "description": "Les fichiers enregistrés reçoivent les dates de création et de modification de l'original. Le fichier d'origine n'est pas modifié."
+        },
+        "imageConcurrency": {
+          "title": "Images à la fois",
+          "description": "Nombre d'images compressées en même temps. Les vidéos restent une par une."
+        }
       },
       "clipboard": {
         "title": "Presse-papiers",
@@ -442,7 +450,10 @@
       "svgScale": "Échelle SVG {{scale}}x",
       "customSvg": "Conversion SVG personnalisée",
       "targetSize": "Taille cible {{size}} Mo",
-      "targetSizeImage": "Taille cible {{size}}"
+      "targetSizeImage": "Taille cible {{size}}",
+      "fitBox": "Ajuster dans {{width}}×{{height}}",
+      "audioLanguages": "Langues audio {{languages}}",
+      "subtitleLanguages": "Langues des sous-titres {{languages}}"
     },
     "save": {
       "title_video": "Enregistrer le préréglage vidéo",
@@ -466,7 +477,8 @@
     "output": {
       "location": "Emplacement d’enregistrement",
       "followStandard": "Comme le préréglage Standard"
-    }
+    },
+    "photoDelivery": "Livraison photo"
   },
   "dropZone": {
     "unsupportedType": "Ce type de fichier n’est pas pris en charge.",
@@ -884,7 +896,16 @@
     "dragAndDrop": "Glisser-déposer",
     "or": "Ou",
     "clickToSelect": "Cliquez pour sélectionner des médias",
-    "dropAnywhere": "Déposez n’importe où…"
+    "dropAnywhere": "Déposez n’importe où…",
+    "resume": {
+      "title": "Lot inachevé",
+      "description_one": "{{count}} fichier n'a pas été terminé. Il peut être rouvert.",
+      "description_other": "{{count}} fichiers n'ont pas été terminés. Ils peuvent être rouverts.",
+      "resume": "Reprendre",
+      "discard": "Abandonner",
+      "restored": "Les fichiers inachevés ont été ouverts. Compressez-les quand vous êtes prêt.",
+      "description_many": "{{count}} fichiers n'ont pas été terminés. Ils peuvent être rouverts."
+    }
   },
   "compression": {
     "cannotCancel": "La compression ne peut pas être annulée à ce stade.",
@@ -944,7 +965,20 @@
       "audio": "Audio",
       "others": "Autres"
     },
-    "noAudio": "Aucun audio trouvé"
+    "noAudio": "Aucun audio trouvé",
+    "languages": {
+      "placeholder": "eng, spa",
+      "title": "Conserver les langues",
+      "description": "Ne conserve que les pistes audio et les sous-titres de ces langues. Laissez vide pour tout conserver.",
+      "audio": "Langues audio",
+      "subtitles": "Langues des sous-titres"
+    },
+    "fitBox": {
+      "title": "Ajuster dans",
+      "description": "Réduit les images plus grandes. Les plus petites gardent leur taille d'origine.",
+      "width": "Largeur max.",
+      "height": "Hauteur max."
+    }
   },
   "quality": {
     "unsupportedAudio": "Le format ou le codec audio sélectionné ne permet pas de régler la qualité.",

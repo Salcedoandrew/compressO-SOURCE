@@ -230,6 +230,7 @@ pub fn init(app: &App) {
     app.manage(TrayPopoverState(Mutex::new(false)));
     app.manage(crate::tauri_commands::tray::DroppedFilesState::default());
     app.manage(crate::tauri_commands::drop_queue::DropQueueState::default());
+    crate::tauri_commands::drop_queue::restore(app.handle());
     let _ = APP_HANDLE.set(app.handle().clone());
     crate::sys::clipboard_watch::init(app.handle());
     crate::sys::watch_folders::init(app.handle());

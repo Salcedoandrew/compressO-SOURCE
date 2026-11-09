@@ -10,6 +10,7 @@ import CompressionQuality from './image/CompressionQuality'
 import ImageDimensions from './image/Dimensions'
 import DynamicRange from './image/DynamicRange'
 import ImageExtension from './image/Extension'
+import FitBox from './image/FitBox'
 import SvgConfig from './image/SvgConfig'
 import SvgScaleFactor from './image/SvgScaleFactor'
 import TransformImage from './image/TransformImage'
@@ -118,10 +119,21 @@ function ImageSettings({ mediaIndex }: ImageSettingsProps) {
                     <Divider className="my-3" />
                   </div>
                   <div>
+                    <FitBox mediaIndex={mediaIndex} />
+                    <Divider className="my-3" />
+                  </div>
+                  <div>
                     <TransformImage mediaIndex={mediaIndex} />
                     <Divider className="my-3 mb-2" />
                   </div>
                 </>
+              ) : null}
+
+              {mediaIndex < 0 ? (
+                <div>
+                  <FitBox mediaIndex={mediaIndex} />
+                  <Divider className="my-3" />
+                </div>
               ) : null}
 
               {convertToExtension === 'svg' ? (

@@ -227,6 +227,9 @@ pub struct SubtitlesConfig {
     pub subtitles: Vec<SubtitleConfig>,
     pub should_enable_subtitles: Option<bool>,
     pub preserve_existing_subtitles: Option<bool>,
+    /// Keep only subtitle tracks in these languages (for example `eng`). Empty keeps them all.
+    #[serde(default)]
+    pub keep_languages: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -252,6 +255,9 @@ pub struct AudioConfig {
     pub bitrate: Option<u32>,
     pub audio_codec: Option<String>,
     pub selected_audio_tracks: Option<Vec<usize>>,
+    /// Keep only audio tracks in these languages. Empty keeps the selection above, or every track.
+    #[serde(default)]
+    pub keep_languages: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

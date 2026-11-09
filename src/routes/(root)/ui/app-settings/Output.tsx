@@ -8,6 +8,7 @@ import AnimatedLabel from '@/components/AnimatedLabel'
 import Button from '@/components/Button'
 import Icon from '@/components/Icon'
 import InfoTooltip from '@/components/InfoTooltip'
+import NumberInput from '@/components/NumberInput'
 import Select from '@/components/Select'
 import Switch from '@/components/Switch'
 import TextInput from '@/components/TextInput'
@@ -20,6 +21,10 @@ import {
 } from '@/stores/settingsStore'
 import { deleteCache as invokeDeleteCache } from '@/tauri/commands/fs'
 import { getPlatform } from '@/utils/fs'
+import {
+  clampImageConcurrency,
+  IMAGE_CONCURRENCY_RANGE,
+} from '@/utils/imageConcurrency'
 import { pickSaveFolder, SAVE_LOCATION_OPTIONS } from './PresetOutputFields'
 import { SettingsRow, SettingsSection } from './SettingsLayout'
 import { appProxy } from '../../-state'
@@ -40,6 +45,8 @@ function Output() {
   const {
     saveLargerOutputs,
     replaceOriginalFiles,
+    preserveFileDates,
+    imageConcurrency,
     preserveFolderStructure,
     copyOutputToClipboard,
     copyBatchOutputToClipboard,
@@ -198,6 +205,36 @@ function Output() {
             onValueChange={(isSelected) => {
               settingsStore.replaceOriginalFiles = isSelected
             }}
+          />
+        </SettingsRow>
+        <SettingsRow
+          settingId="preserveDates"
+          title={t('settings.output.saving.preserveDates.title')}
+          description={t('settings.output.saving.preserveDates.description')}
+        >
+          <Switch
+            aria-label={t('settings.output.saving.preserveDates.title')}
+            isSelected={preserveFileDates}
+            onValueChange={(isSelected) => {
+              settingsStore.preserveFileDates = isSelected
+            }}
+          />
+        </SettingsRow>
+        <SettingsRow
+          settingId="imageConcurrency"
+          title={t('settings.output.saving.imageConcurrency.title')}
+          description={t('settings.output.saving.imageConcurrency.description')}
+        >
+          <NumberInput
+            aria-label={t('settings.output.saving.imageConcurrency.title')}
+            minValue={IMAGE_CONCURRENCY_RANGE.min}
+            maxValue={IMAGE_CONCURRENCY_RANGE.max}
+            step={1}
+            value={imageConcurrency}
+            onValueChange={(value) => {
+              settingsStore.imageConcurrency = clampImageConcurrency(value)
+            }}
+            className="w-[120px]"
           />
         </SettingsRow>
       </SettingsSection>

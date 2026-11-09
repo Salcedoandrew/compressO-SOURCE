@@ -164,6 +164,20 @@ export const SETTINGS_INDEX = {
       t('settings.output.saving.skipLarger.description'),
     ],
   },
+  preserveDates: {
+    page: 'output',
+    getText: (t) => [
+      t('settings.output.saving.preserveDates.title'),
+      t('settings.output.saving.preserveDates.description'),
+    ],
+  },
+  imageConcurrency: {
+    page: 'output',
+    getText: (t) => [
+      t('settings.output.saving.imageConcurrency.title'),
+      t('settings.output.saving.imageConcurrency.description'),
+    ],
+  },
   replaceOriginal: {
     page: 'output',
     getText: (t) => [

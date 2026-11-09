@@ -214,7 +214,15 @@
           "placeholder": "Không có tiền tố",
           "description": "Văn bản thêm vào đầu tên tệp được lưu. Để trống để giữ tên gốc."
         },
-        "appliesTo": "Chỉ áp dụng cho cài đặt sẵn Tiêu chuẩn."
+        "appliesTo": "Chỉ áp dụng cho cài đặt sẵn Tiêu chuẩn.",
+        "preserveDates": {
+          "title": "Giữ ngày gốc",
+          "description": "Tệp đã lưu nhận ngày tạo và ngày sửa của tệp gốc. Tệp gốc không bị thay đổi."
+        },
+        "imageConcurrency": {
+          "title": "Ảnh cùng lúc",
+          "description": "Số ảnh được nén cùng lúc. Video vẫn từng tệp một."
+        }
       },
       "clipboard": {
         "title": "Bảng nhớ tạm",
@@ -442,7 +450,10 @@
       "svgScale": "Tỷ lệ SVG {{scale}}x",
       "customSvg": "Chuyển đổi SVG tùy chỉnh",
       "targetSize": "Kích thước mục tiêu {{size}} MB",
-      "targetSizeImage": "Kích thước mục tiêu {{size}}"
+      "targetSizeImage": "Kích thước mục tiêu {{size}}",
+      "fitBox": "Vừa trong {{width}}×{{height}}",
+      "audioLanguages": "Ngôn ngữ âm thanh {{languages}}",
+      "subtitleLanguages": "Ngôn ngữ phụ đề {{languages}}"
     },
     "save": {
       "title_video": "Lưu cài đặt sẵn cho video",
@@ -466,7 +477,8 @@
     "output": {
       "location": "Vị trí lưu",
       "followStandard": "Giống cài đặt sẵn Tiêu chuẩn"
-    }
+    },
+    "photoDelivery": "Giao ảnh"
   },
   "dropZone": {
     "unsupportedType": "Loại tệp này không được hỗ trợ.",
@@ -862,7 +874,14 @@
     "dragAndDrop": "Kéo và thả",
     "or": "Hoặc",
     "clickToSelect": "Nhấp để chọn tệp phương tiện",
-    "dropAnywhere": "Thả vào bất kỳ đâu…"
+    "dropAnywhere": "Thả vào bất kỳ đâu…",
+    "resume": {
+      "title": "Lô chưa xong",
+      "description_other": "{{count}} tệp chưa xong. Có thể mở lại.",
+      "resume": "Tiếp tục",
+      "discard": "Bỏ",
+      "restored": "Đã mở các tệp chưa xong. Hãy nén khi bạn sẵn sàng."
+    }
   },
   "compression": {
     "cannotCancel": "Không thể hủy quá trình nén vào lúc này.",
@@ -916,7 +935,20 @@
       "audio": "Âm thanh",
       "others": "Khác"
     },
-    "noAudio": "Không tìm thấy âm thanh"
+    "noAudio": "Không tìm thấy âm thanh",
+    "languages": {
+      "placeholder": "eng, spa",
+      "title": "Giữ ngôn ngữ",
+      "description": "Chỉ giữ track âm thanh và phụ đề của các ngôn ngữ này. Để trống để giữ tất cả.",
+      "audio": "Ngôn ngữ âm thanh",
+      "subtitles": "Ngôn ngữ phụ đề"
+    },
+    "fitBox": {
+      "title": "Vừa trong khung",
+      "description": "Thu nhỏ ảnh lớn hơn kích thước này. Ảnh nhỏ hơn giữ nguyên kích thước.",
+      "width": "Chiều rộng tối đa",
+      "height": "Chiều cao tối đa"
+    }
   },
   "quality": {
     "unsupportedAudio": "Định dạng hoặc bộ mã hóa âm thanh đã chọn không hỗ trợ điều chỉnh chất lượng.",

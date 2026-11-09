@@ -4,6 +4,10 @@ import { proxy, subscribe } from 'valtio'
 import * as constants from '@/constants'
 import { isLanguageCode, type LanguageCode } from '@/i18n/languages'
 import { DEFAULT_PRESET_CHOICE, type PresetMediaType } from '@/types/preset'
+import {
+  clampImageConcurrency,
+  DEFAULT_IMAGE_CONCURRENCY,
+} from '@/utils/imageConcurrency'
 
 export const DEFAULT_OUTPUT_FILE_PREFIX = 'compressO-'
 
@@ -64,6 +68,13 @@ export type SettingsState = {
    * name is used instead, as for any existing file.
    */
   replaceOriginalFiles: boolean
+  /**
+   * Copy the original file's created and modified dates onto the saved output (on by default).
+   * The original file itself is not changed.
+   */
+  preserveFileDates: boolean
+  /** Images compressed at the same time. Videos stay one at a time. */
+  imageConcurrency: number
   /** Copy the output to the clipboard after compression */
   copyOutputToClipboard: boolean
   /** With `copyOutputToClipboard`, also copy all outputs of a batch (on by default) */
@@ -147,6 +158,12 @@ function readSettings(): SettingsState {
       localStorage.getItem(constants.saveLargerOutputs) !== 'false',
     replaceOriginalFiles:
       localStorage.getItem(constants.replaceOriginalFiles) === 'true',
+    preserveFileDates:
+      localStorage.getItem(constants.preserveFileDates) !== 'false',
+    imageConcurrency: clampImageConcurrency(
+      localStorage.getItem(constants.imageConcurrency) ??
+        DEFAULT_IMAGE_CONCURRENCY,
+    ),
     copyOutputToClipboard:
       localStorage.getItem(constants.copyOutputToClipboard) === 'true',
     copyBatchOutputToClipboard:
@@ -246,6 +263,14 @@ subscribe(settingsStore, () => {
   localStorage.setItem(
     constants.replaceOriginalFiles,
     String(settingsStore.replaceOriginalFiles),
+  )
+  localStorage.setItem(
+    constants.preserveFileDates,
+    String(settingsStore.preserveFileDates),
+  )
+  localStorage.setItem(
+    constants.imageConcurrency,
+    String(clampImageConcurrency(settingsStore.imageConcurrency)),
   )
   localStorage.setItem(
     constants.copyOutputToClipboard,

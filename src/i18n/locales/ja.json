@@ -214,7 +214,15 @@
           "placeholder": "接頭辞なし",
           "description": "保存するファイル名の先頭に追加するテキストです。元の名前のままにする場合は空のままにしてください。"
         },
-        "appliesTo": "これらは標準プリセットにのみ適用されます。"
+        "appliesTo": "これらは標準プリセットにのみ適用されます。",
+        "preserveDates": {
+          "title": "元の日時を残す",
+          "description": "保存したファイルに、元のファイルの作成日時と更新日時を付けます。元のファイルは変更しません。"
+        },
+        "imageConcurrency": {
+          "title": "同時に処理する画像",
+          "description": "一度に圧縮する画像の数です。動画は1つずつです。"
+        }
       },
       "clipboard": {
         "title": "クリップボード",
@@ -442,7 +450,10 @@
       "svgScale": "SVG 拡大率 {{scale}} 倍",
       "customSvg": "カスタム SVG 変換",
       "targetSize": "目標サイズ {{size}} MB",
-      "targetSizeImage": "目標サイズ {{size}}"
+      "targetSizeImage": "目標サイズ {{size}}",
+      "fitBox": "{{width}}×{{height}} に収める",
+      "audioLanguages": "音声の言語 {{languages}}",
+      "subtitleLanguages": "字幕の言語 {{languages}}"
     },
     "save": {
       "title_video": "ビデオのプリセットを保存",
@@ -466,7 +477,8 @@
     "output": {
       "location": "保存場所",
       "followStandard": "標準プリセットと同じ"
-    }
+    },
+    "photoDelivery": "写真の受け渡し"
   },
   "dropZone": {
     "unsupportedType": "このファイルの種類には対応していません。",
@@ -862,7 +874,14 @@
     "dragAndDrop": "ドラッグ＆ドロップ",
     "or": "または",
     "clickToSelect": "クリックしてメディアを選択",
-    "dropAnywhere": "どこにでもドロップ…"
+    "dropAnywhere": "どこにでもドロップ…",
+    "resume": {
+      "title": "未完了のバッチ",
+      "description_other": "{{count}} 件が完了していません。もう一度開けます。",
+      "resume": "再開",
+      "discard": "破棄",
+      "restored": "未完了のファイルを開きました。準備ができたら圧縮してください。"
+    }
   },
   "compression": {
     "cannotCancel": "現時点では圧縮をキャンセルできません。",
@@ -916,7 +935,20 @@
       "audio": "オーディオ",
       "others": "その他"
     },
-    "noAudio": "オーディオが見つかりません"
+    "noAudio": "オーディオが見つかりません",
+    "languages": {
+      "placeholder": "eng, spa",
+      "title": "言語を残す",
+      "description": "この言語の音声と字幕だけを残します。空欄ですべて残します。",
+      "audio": "音声の言語",
+      "subtitles": "字幕の言語"
+    },
+    "fitBox": {
+      "title": "枠に収める",
+      "description": "これより大きい画像を縮小します。小さい画像はそのままです。",
+      "width": "最大の幅",
+      "height": "最大の高さ"
+    }
   },
   "quality": {
     "unsupportedAudio": "選択した音声形式またはコーデックは品質の調整に対応していません。",

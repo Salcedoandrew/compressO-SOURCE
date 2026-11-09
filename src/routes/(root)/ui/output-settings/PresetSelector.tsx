@@ -21,6 +21,10 @@ import {
   type PresetOutput,
   STANDARD_PRESET_ID,
 } from '@/types/preset'
+import {
+  PHOTO_DELIVERY_PRESET_ID,
+  PHOTO_DELIVERY_PRESET_NAME,
+} from '@/utils/photoDelivery'
 import SavePresetModal from './SavePresetModal'
 import {
   applyPreset,
@@ -256,7 +260,12 @@ function PresetSelector({ mediaType, mediaIndex }: PresetSelectorProps) {
           {presets.map((p) => (
             <SelectItem
               key={p.id}
-              textValue={p.name}
+              textValue={
+                p.id === PHOTO_DELIVERY_PRESET_ID &&
+                p.name === PHOTO_DELIVERY_PRESET_NAME
+                  ? t('presets.photoDelivery')
+                  : p.name
+              }
               // The preset applied to newly added media
               endContent={
                 p.id === defaultPresetId ? (
@@ -268,7 +277,10 @@ function PresetSelector({ mediaType, mediaIndex }: PresetSelectorProps) {
                 ) : null
               }
             >
-              {p.name}
+              {p.id === PHOTO_DELIVERY_PRESET_ID &&
+              p.name === PHOTO_DELIVERY_PRESET_NAME
+                ? t('presets.photoDelivery')
+                : p.name}
             </SelectItem>
           ))}
         </Select>

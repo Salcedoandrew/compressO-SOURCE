@@ -447,6 +447,7 @@ async fn run() {
             #[cfg(target_os = "linux")]
             {
                 app.manage(tauri_commands::drop_queue::DropQueueState::default());
+                tauri_commands::drop_queue::restore(app.handle());
                 sys::watch_folders::init(app.handle());
             }
 

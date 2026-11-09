@@ -1,5 +1,16 @@
 # Changelog
 
+### 4.1.0-test.1
+
+Features:
+
+- **Fit inside**: Image batches can set a maximum width and height. Larger photos are shrunk to fit, and smaller photos stay their original size.
+- **Keep original dates**: Saved files can keep the original file's created and modified dates. The original file is not changed. This is on by default and can be turned off in Settings, under Output.
+- **Resume a batch**: An unfinished main-window batch can be opened again after a quit or a crash. Files already saved are skipped. The drop-zone queue is saved and waiting work continues after a restart.
+- **Images at once**: Settings, under Output, chooses how many images are compressed at the same time (1 to 8, default 2). Videos stay one at a time.
+- **Photo delivery**: A preset for client galleries. It writes a high-quality JPEG, fits the long edge inside 2560 pixels without enlarging smaller photos, and keeps metadata.
+- **Keep languages**: A video can keep only the audio and subtitle tracks in the languages you list, such as `eng, spa`.
+
 ### 4.1.0
 
 Features:

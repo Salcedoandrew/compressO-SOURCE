@@ -12,10 +12,12 @@ export async function compressMediaBatch(
     videoConfig?: VideoCompressionConfig
     imageConfig?: ImageCompressionConfig
   }[],
+  imageConcurrency?: number,
 ): Promise<MediaBatchCompressionResult> {
   return core.invoke('compress_media_batch', {
     batchId,
     media,
+    imageConcurrency: imageConcurrency ?? null,
   })
 }
 

@@ -51,6 +51,11 @@ pub async fn estimate_video_size(
         .await
 }
 
+/// Images compressed at once. Videos and audio stay one at a time.
+pub fn clamp_image_concurrency(value: u32) -> usize {
+    value.clamp(1, 8) as usize
+}
+
 #[tauri::command]
 pub async fn compress_media_batch(
     app: tauri::AppHandle,
@@ -58,6 +63,7 @@ pub async fn compress_media_batch(
     window: tauri::WebviewWindow,
     batch_id: String,
     media: Vec<MediaItemConfig>,
+    image_concurrency: Option<u32>,
 ) -> Result<MediaBatchCompressionResult, String> {
     let mut results: std::collections::HashMap<String, MediaCompressionResult> =
         std::collections::HashMap::new();
@@ -66,7 +72,11 @@ pub async fn compress_media_batch(
     // `keep_awake` (Settings -> General)
     let _keep_awake = crate::sys::keep_awake::KeepAwake::acquire();
 
-    log::info!("[media] Compressing {} media (batch {})", media.len(), batch_id);
+    log::info!(
+        "[media] Compressing {} media (batch {})",
+        media.len(),
+        batch_id
+    );
 
     // Cancelled between two media (or while paused), when no process would see it
     let is_cancelled = Arc::new(AtomicBool::new(false));
@@ -97,6 +107,7 @@ pub async fn compress_media_batch(
         &media,
         &mut results,
         &is_cancelled,
+        image_concurrency.unwrap_or(2),
     )
     .await;
     // A pause left on (e.g. cancelled while paused) is not kept
@@ -147,11 +158,12 @@ async fn compress_media_items(
     media: &[MediaItemConfig],
     results: &mut std::collections::HashMap<String, MediaCompressionResult>,
     is_cancelled: &AtomicBool,
+    image_concurrency: u32,
 ) -> Result<(), String> {
     let total_count = media.len();
-    let shared_results = Mutex::new(std::mem::take(results));
+    let shared_results = Arc::new(Mutex::new(std::mem::take(results)));
     let run_lane = |lane: Lane| {
-        let shared_results = &shared_results;
+        let shared_results = shared_results.clone();
         async move {
             for (index, media_item) in media
                 .iter()
@@ -172,7 +184,7 @@ async fn compress_media_items(
                     index,
                     total_count,
                     media_item,
-                    shared_results,
+                    &shared_results,
                 )
                 .await
                 {
@@ -184,12 +196,79 @@ async fn compress_media_items(
             Ok::<(), String>(())
         }
     };
-    let (videos, audio, images) = tokio::join!(
-        run_lane(Lane::Video),
-        run_lane(Lane::Audio),
-        run_lane(Lane::Image)
-    );
-    *results = shared_results.into_inner().unwrap_or_default();
+    let image_limit = clamp_image_concurrency(image_concurrency);
+    let run_images = async {
+        let jobs: Vec<(usize, MediaItemConfig)> = media
+            .iter()
+            .enumerate()
+            .filter(|(_, item)| get_lane(item) == Lane::Image)
+            .map(|(index, item)| (index, item.clone()))
+            .collect();
+        let permits = Arc::new(tokio::sync::Semaphore::new(image_limit));
+        let mut running = tokio::task::JoinSet::new();
+        for (index, media_item) in jobs {
+            while is_batch_paused(batch_id) && !is_cancelled.load(Ordering::SeqCst) {
+                tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+            }
+            if is_cancelled.load(Ordering::SeqCst) {
+                break;
+            }
+            let permit = permits
+                .clone()
+                .acquire_owned()
+                .await
+                .map_err(|error| error.to_string())?;
+            let task_app = app.clone();
+            let task_window = window.clone();
+            let task_batch_id = batch_id.clone();
+            let task_results = shared_results.clone();
+            running.spawn(async move {
+                let _permit = permit;
+                compress_media_item(
+                    &task_app,
+                    &task_window,
+                    &task_batch_id,
+                    index,
+                    total_count,
+                    &media_item,
+                    &task_results,
+                )
+                .await
+            });
+        }
+        let mut lane_error: Option<String> = None;
+        while let Some(finished) = running.join_next().await {
+            match finished {
+                Ok(Err(error)) => {
+                    is_cancelled.store(true, Ordering::SeqCst);
+                    lane_error.get_or_insert(error);
+                }
+                Err(error) => {
+                    is_cancelled.store(true, Ordering::SeqCst);
+                    lane_error.get_or_insert(error.to_string());
+                }
+                Ok(Ok(())) => {}
+            }
+        }
+        match lane_error {
+            Some(error) => Err(error),
+            None if is_cancelled.load(Ordering::SeqCst) => Err(String::from("CANCELLED")),
+            None => Ok(()),
+        }
+    };
+    let (videos, audio, images) =
+        tokio::join!(run_lane(Lane::Video), run_lane(Lane::Audio), run_images);
+    *results = Arc::try_unwrap(shared_results)
+        .unwrap_or_else(|shared| {
+            Mutex::new(
+                shared
+                    .lock()
+                    .unwrap_or_else(|poison| poison.into_inner())
+                    .clone(),
+            )
+        })
+        .into_inner()
+        .unwrap_or_default();
     videos.and(audio).and(images)
 }
 
@@ -416,4 +495,17 @@ async fn compress_media_item(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::clamp_image_concurrency;
+
+    #[test]
+    fn image_concurrency_stays_between_one_and_eight() {
+        assert_eq!(clamp_image_concurrency(0), 1);
+        assert_eq!(clamp_image_concurrency(2), 2);
+        assert_eq!(clamp_image_concurrency(8), 8);
+        assert_eq!(clamp_image_concurrency(40), 8);
+    }
 }

@@ -8,6 +8,12 @@ import {
   type PresetOutput,
   STANDARD_PRESET_ID,
 } from '@/types/preset'
+import {
+  createPhotoDeliveryPreset,
+  PHOTO_DELIVERY_PRESET_ID,
+} from '@/utils/photoDelivery'
+
+const PHOTO_DELIVERY_REMOVED = 'photoDeliveryRemoved'
 
 const PRESETS_SCHEMA_VERSION = 1
 
@@ -47,6 +53,16 @@ function isValidOutput(output: unknown): output is PresetOutput {
   )
 }
 
+function withPhotoDeliveryPreset(state: PresetsState): PresetsState {
+  if (
+    state.presets.some((preset) => preset.id === PHOTO_DELIVERY_PRESET_ID) ||
+    localStorage.getItem(PHOTO_DELIVERY_REMOVED) === 'true'
+  ) {
+    return state
+  }
+  return { ...state, presets: [createPhotoDeliveryPreset(), ...state.presets] }
+}
+
 /** Reads the stored presets, dropping anything that is not a valid preset */
 function readPresets(): PresetsState {
   const fallback: PresetsState = {
@@ -62,7 +78,7 @@ function readPresets(): PresetsState {
       localStorage.getItem(constants.presets) ?? 'null',
     ) as Partial<StoredPresets> | null
     if (!stored || stored.schemaVersion !== PRESETS_SCHEMA_VERSION) {
-      return fallback
+      return withPhotoDeliveryPreset(fallback)
     }
     const presets = (Array.isArray(stored.presets) ? stored.presets : [])
       .filter(isValidPreset)
@@ -80,16 +96,16 @@ function readPresets(): PresetsState {
         ? id!
         : STANDARD_PRESET_ID
     }
-    return {
+    return withPhotoDeliveryPreset({
       presets,
       defaultPresetIds: {
         video: getDefaultPresetId('video'),
         image: getDefaultPresetId('image'),
         audio: getDefaultPresetId('audio'),
       },
-    }
+    })
   } catch {
-    return fallback
+    return withPhotoDeliveryPreset(fallback)
   }
 }
 
@@ -145,6 +161,9 @@ export function getAvailablePresetName(
 export function deletePreset(id: string) {
   const preset = getStoredPreset(id)
   if (!preset) return
+  if (id === PHOTO_DELIVERY_PRESET_ID) {
+    localStorage.setItem(PHOTO_DELIVERY_REMOVED, 'true')
+  }
   presetsStore.presets = presetsStore.presets.filter((p) => p.id !== id)
   if (presetsStore.defaultPresetIds[preset.mediaType] === id) {
     presetsStore.defaultPresetIds[preset.mediaType] = STANDARD_PRESET_ID

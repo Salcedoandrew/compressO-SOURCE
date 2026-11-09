@@ -203,7 +203,7 @@ impl FFMPEG {
         let keeps_audio = audio_config.volume > 0 || is_silent_audio;
 
         // Audio formats hold a single audio stream, so only the first selected track is extracted
-        let selected_audio_tracks: Option<Vec<usize>> = if is_audio_target {
+        let mut selected_audio_tracks: Option<Vec<usize>> = if is_audio_target {
             Some(vec![audio_config
                 .selected_audio_tracks
                 .as_ref()
@@ -212,10 +212,33 @@ impl FFMPEG {
         } else {
             audio_config.selected_audio_tracks.clone()
         };
+        if let Some(keep) = audio_config
+            .keep_languages
+            .as_ref()
+            .filter(|languages| !languages.is_empty())
+        {
+            let languages: Vec<Option<String>> = audio_streams
+                .iter()
+                .map(|stream| stream.language.clone())
+                .collect();
+            let matched = super::languages::matching_indexes(&languages, keep);
+            selected_audio_tracks = Some(match selected_audio_tracks {
+                Some(selected) => selected
+                    .into_iter()
+                    .filter(|index| matched.contains(index))
+                    .collect(),
+                None => matched,
+            });
+        }
 
+        let keep_subtitle_languages = subtitles_config
+            .as_ref()
+            .and_then(|config| config.keep_languages.clone())
+            .unwrap_or_default();
         let (existing_subtitle_count, existing_subtitle_streams): (usize, Vec<SubtitleStream>) = {
             if let Some(subs_config) = subtitles_config {
-                let preserve = subs_config.preserve_existing_subtitles.unwrap_or(false);
+                let preserve = subs_config.preserve_existing_subtitles.unwrap_or(false)
+                    || !keep_subtitle_languages.is_empty();
                 if preserve {
                     let mut ffprobe = FFPROBE::new(&self.app)?.with_owner_window(&self.owner_window);
                     let streams = ffprobe.get_subtitle_streams(video_path).await?;
@@ -1003,6 +1026,19 @@ impl FFMPEG {
                 let bitmap_codecs = ["hdmv_pgs_subtitle", "dvd_subtitle", "xsub"];
 
                 for (idx, stream) in existing_subtitle_streams.iter().enumerate() {
+                    if !keep_subtitle_languages.is_empty() {
+                        let code = stream
+                            .language
+                            .as_deref()
+                            .unwrap_or("")
+                            .to_ascii_lowercase();
+                        if !keep_subtitle_languages
+                            .iter()
+                            .any(|kept| kept.eq_ignore_ascii_case(&code))
+                        {
+                            continue;
+                        }
+                    }
                     let is_bitmap = bitmap_codecs.contains(&stream.codec.as_str());
                     let output_container = container;
 

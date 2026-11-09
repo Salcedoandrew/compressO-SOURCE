@@ -214,7 +214,15 @@
           "placeholder": "Önek yok",
           "description": "Kaydedilen dosya adlarının başına eklenen metin. Orijinal adları korumak için boş bırakın."
         },
-        "appliesTo": "Bunlar yalnızca Standart ön ayar için geçerlidir."
+        "appliesTo": "Bunlar yalnızca Standart ön ayar için geçerlidir.",
+        "preserveDates": {
+          "title": "Özgün tarihleri koru",
+          "description": "Kaydedilen dosyalar özgün dosyanın oluşturulma ve değiştirilme tarihlerini alır. Özgün dosya değişmez."
+        },
+        "imageConcurrency": {
+          "title": "Aynı anda görüntüler",
+          "description": "Aynı anda kaç görüntünün sıkıştırılacağı. Videolar teker teker kalır."
+        }
       },
       "clipboard": {
         "title": "Pano",
@@ -442,7 +450,10 @@
       "svgScale": "SVG ölçeği {{scale}}x",
       "customSvg": "Özel SVG dönüştürme",
       "targetSize": "Hedef boyut {{size}} MB",
-      "targetSizeImage": "Hedef boyut {{size}}"
+      "targetSizeImage": "Hedef boyut {{size}}",
+      "fitBox": "{{width}}×{{height}} içine sığdır",
+      "audioLanguages": "Ses dilleri {{languages}}",
+      "subtitleLanguages": "Altyazı dilleri {{languages}}"
     },
     "save": {
       "title_video": "Video Ön Ayarını Kaydet",
@@ -466,7 +477,8 @@
     "output": {
       "location": "Kaydetme konumu",
       "followStandard": "Standart ön ayarla aynı"
-    }
+    },
+    "photoDelivery": "Fotoğraf teslimi"
   },
   "dropZone": {
     "unsupportedType": "Bu dosya türü desteklenmiyor.",
@@ -873,7 +885,15 @@
     "dragAndDrop": "Sürükleyip Bırakın",
     "or": "Veya",
     "clickToSelect": "Medya seçmek için tıklayın",
-    "dropAnywhere": "Herhangi bir yere bırakın…"
+    "dropAnywhere": "Herhangi bir yere bırakın…",
+    "resume": {
+      "title": "Bitmemiş toplu iş",
+      "description_other": "{{count}} dosya bitmedi. Yeniden açılabilir.",
+      "resume": "Sürdür",
+      "discard": "Vazgeç",
+      "restored": "Bitmemiş dosyalar açıldı. Hazır olunca sıkıştırın.",
+      "description_one": "{{count}} dosya bitmedi. Yeniden açılabilir."
+    }
   },
   "compression": {
     "cannotCancel": "Sıkıştırma şu anda iptal edilemez.",
@@ -930,7 +950,20 @@
       "audio": "Ses",
       "others": "Diğer"
     },
-    "noAudio": "Ses bulunamadı"
+    "noAudio": "Ses bulunamadı",
+    "languages": {
+      "placeholder": "eng, spa",
+      "title": "Dilleri koru",
+      "description": "Yalnızca bu dillerdeki ses ve altyazı parçalarını tutar. Tümü için boş bırakın.",
+      "audio": "Ses dilleri",
+      "subtitles": "Altyazı dilleri"
+    },
+    "fitBox": {
+      "title": "İçine sığdır",
+      "description": "Bundan büyük görüntüleri küçültür. Daha küçük olanlar özgün boyutunda kalır.",
+      "width": "En fazla genişlik",
+      "height": "En fazla yükseklik"
+    }
   },
   "quality": {
     "unsupportedAudio": "Seçilen ses biçimi veya kodlayıcı kalite ayarını desteklemiyor.",
