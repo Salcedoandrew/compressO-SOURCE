@@ -1012,6 +1012,7 @@ dependencies = [
  "crossbeam-channel",
  "dbus",
  "exiftool-rs",
+ "filetime",
  "gtk",
  "image 0.25.9",
  "img-parts",

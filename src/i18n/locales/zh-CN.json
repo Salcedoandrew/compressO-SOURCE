@@ -918,7 +918,23 @@
     },
     "noAudio": "未找到音频"
   },
+  "backgroundFill": {
+    "title": "填充背景",
+    "color": "背景颜色",
+    "description": "转换为不支持透明度的格式（如 JPEG）时填充透明区域。"
+  },
+  "preserveDates": {
+    "title": "保留日期",
+    "description": "在压缩后的文件中保留图片原始的创建和修改日期。"
+  },
   "quality": {
+    "formats": {
+      "jpeg": "JPEG 质量",
+      "png": "PNG 质量",
+      "webp": "WEBP 质量",
+      "gif": "GIF 质量",
+      "avif": "AVIF 质量"
+    },
     "unsupportedAudio": "所选音频格式或编解码器不支持调整质量。",
     "lossless": "无损压缩",
     "title": "质量"

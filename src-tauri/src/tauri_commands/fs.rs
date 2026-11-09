@@ -51,13 +51,21 @@ pub async fn move_file(
     from: &str,
     to: &str,
     replace_original: Option<String>,
+    preserve_timestamps_from: Option<String>,
 ) -> Result<String, String> {
+    // Read before moving: the original is gone once it is replaced
+    let times = preserve_timestamps_from
+        .as_deref()
+        .and_then(fs::FileTimes::of);
     let requested = PathBuf::from(to);
     if let Some(original) = replace_original {
         if is_same_file(&requested, Path::new(&original)).await {
             // Not moved at all on an error, so it is saved as usual below
             match replace_file(from, &requested).await {
-                Ok(saved_path) => return Ok(allow_saved_file(&app_handle, &saved_path)),
+                Ok(saved_path) => {
+                    fs::apply_file_times(&saved_path.to_string_lossy(), times.as_ref());
+                    return Ok(allow_saved_file(&app_handle, &saved_path));
+                }
                 Err(err) => log::error!(
                     "[save] Could not move the output beside {}: {}",
                     requested.display(),
@@ -93,6 +101,7 @@ pub async fn move_file(
         );
         return Err(err.to_string());
     }
+    fs::apply_file_times(&to.to_string_lossy(), times.as_ref());
     Ok(allow_saved_file(&app_handle, &to))
 }
 

@@ -207,11 +207,28 @@ export type Video = {
   }
 }
 
+/** Quality (1-100) of each output format, as Alic's default profile has it */
+export type ImageFormatQualities = {
+  jpeg: number
+  png: number
+  webp: number
+  gif: number
+  avif: number
+}
+
 export type ImageConfig = {
   dynamicRange?: ImageDynamicRangeConfig
   convertToExtension: keyof typeof extensions.image | '-'
   isLossless: boolean
   quality: number
+  /** Quality per output format; a format it does not name uses `quality` */
+  formatQualities?: ImageFormatQualities
+  /** Fills transparent areas when converting to a format without alpha, e.g. JPEG */
+  shouldFillBackground?: boolean
+  /** `#RRGGBB` the transparent areas are filled with (see `shouldFillBackground`) */
+  backgroundColor?: string
+  /** Keeps the image's creation & modification dates on the compressed output */
+  shouldPreserveDates?: boolean
   /** Compressed to fit within `targetSizeInKB` instead of at `quality` (see `imageTargetSize.ts`) */
   shouldUseTargetSize?: boolean
   targetSizeInKB?: number

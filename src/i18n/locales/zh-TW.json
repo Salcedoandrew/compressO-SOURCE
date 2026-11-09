@@ -918,7 +918,23 @@
     },
     "noAudio": "找不到音訊"
   },
+  "backgroundFill": {
+    "title": "填滿背景",
+    "color": "背景顏色",
+    "description": "轉換為不支援透明度的格式（例如 JPEG）時填滿透明區域。"
+  },
+  "preserveDates": {
+    "title": "保留日期",
+    "description": "在壓縮後的檔案中保留圖片原始的建立和修改日期。"
+  },
   "quality": {
+    "formats": {
+      "jpeg": "JPEG 品質",
+      "png": "PNG 品質",
+      "webp": "WEBP 品質",
+      "gif": "GIF 品質",
+      "avif": "AVIF 品質"
+    },
     "unsupportedAudio": "所選音訊格式或編解碼器不支援調整品質。",
     "lossless": "無損壓縮",
     "title": "品質"

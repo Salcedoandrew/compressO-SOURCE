@@ -918,7 +918,23 @@
     },
     "noAudio": "オーディオが見つかりません"
   },
+  "backgroundFill": {
+    "title": "背景を塗りつぶす",
+    "color": "背景色",
+    "description": "JPEGなど透明に対応しない形式に変換するとき、透明な部分を塗りつぶします。"
+  },
+  "preserveDates": {
+    "title": "日付を保持",
+    "description": "圧縮後のファイルに画像の元の作成日と変更日を保持します。"
+  },
   "quality": {
+    "formats": {
+      "jpeg": "JPEG画質",
+      "png": "PNG画質",
+      "webp": "WEBP画質",
+      "gif": "GIF画質",
+      "avif": "AVIF画質"
+    },
     "unsupportedAudio": "選択した音声形式またはコーデックは品質の調整に対応していません。",
     "lossless": "ロスレス圧縮",
     "title": "品質"

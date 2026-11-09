@@ -960,7 +960,23 @@
     },
     "noAudio": "Nie znaleziono dźwięku"
   },
+  "backgroundFill": {
+    "title": "Wypełnienie tła",
+    "color": "Kolor tła",
+    "description": "Wypełnia przezroczyste obszary podczas konwersji do formatu bez przezroczystości, np. JPEG."
+  },
+  "preserveDates": {
+    "title": "Zachowaj daty",
+    "description": "Zachowuje oryginalne daty utworzenia i modyfikacji obrazu w skompresowanym pliku."
+  },
   "quality": {
+    "formats": {
+      "jpeg": "Jakość JPEG",
+      "png": "Jakość PNG",
+      "webp": "Jakość WEBP",
+      "gif": "Jakość GIF",
+      "avif": "Jakość AVIF"
+    },
     "unsupportedAudio": "Wybrany format lub kodek audio nie obsługuje regulacji jakości.",
     "lossless": "Kompresja bezstratna",
     "title": "Jakość"

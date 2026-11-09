@@ -422,6 +422,46 @@ pub struct ImageTargetSize {
     pub dimensions: Option<(f64, f64)>,
 }
 
+/// Quality (1-100) each output format is encoded at, as Alic's default profile has it
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ImageFormatQualities {
+    pub jpeg: u8,
+    pub png: u8,
+    pub webp: u8,
+    pub gif: u8,
+    pub avif: u8,
+}
+
+impl ImageFormatQualities {
+    pub fn uniform(quality: u8) -> Self {
+        Self {
+            jpeg: quality,
+            png: quality,
+            webp: quality,
+            gif: quality,
+            avif: quality,
+        }
+    }
+
+    /// Quality of an output format; formats without one use the JPEG quality
+    pub fn for_extension(&self, extension: &str) -> u8 {
+        match extension {
+            "png" => self.png,
+            "webp" => self.webp,
+            "gif" => self.gif,
+            "avif" => self.avif,
+            _ => self.jpeg,
+        }
+    }
+}
+
+impl Default for ImageFormatQualities {
+    fn default() -> Self {
+        Self::uniform(80)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ImageCompressionConfig {
@@ -436,6 +476,12 @@ pub struct ImageCompressionConfig {
     pub svg_scale_factor: Option<f32>, // 1-8
     pub is_lossless: Option<bool>,
     pub quality: u8, // 1-100
+    /// Quality of each output format; a format it does not name uses `quality`
+    #[serde(default)]
+    pub format_qualities: Option<ImageFormatQualities>,
+    /// `#RRGGBB` transparent areas are filled with when converting to a format without alpha
+    #[serde(default)]
+    pub background_fill: Option<String>,
     pub strip_metadata: Option<bool>,
     pub svg_config: Option<SvgConfig>,
     pub dimensions: Option<(f64, f64)>,

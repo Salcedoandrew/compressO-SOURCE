@@ -5,6 +5,7 @@ import { snapshot } from 'valtio'
 
 import { toast } from '@/components/Toast'
 import { t } from '@/i18n'
+import { getStoredPreset } from '@/stores/presetsStore'
 import { sanitizeFileNamePart, settingsStore } from '@/stores/settingsStore'
 import {
   copyFilesToClipboard,
@@ -12,6 +13,7 @@ import {
   moveFile,
 } from '@/tauri/commands/fs'
 import { Image, Video } from '@/types/app'
+import { inputExtensions } from '@/types/compression'
 import { formatBytes, getParentDirectory } from '@/utils/fs'
 import { getPresetOutput, savesAutomatically } from '@/utils/presetOutput'
 import { recordSavedOutput } from './-history'
@@ -99,6 +101,11 @@ async function saveCompressedMedia(
           replaceOriginal: settingsStore.replaceOriginalFiles
             ? mediaFile.pathRaw
             : null,
+          preserveTimestampsFrom:
+            mediaFile.type === 'image' &&
+            mediaFile.config.shouldPreserveDates !== false
+              ? mediaFile.pathRaw
+              : null,
         },
       )
       savedLocations.add(location)
@@ -280,6 +287,11 @@ export async function saveCompressedMediaWithPrompt(mediaIndex?: number) {
       replaceOriginal: settingsStore.replaceOriginalFiles
         ? mediaFile.pathRaw
         : null,
+      preserveTimestampsFrom:
+        mediaFile.type === 'image' &&
+        mediaFile.config.shouldPreserveDates !== false
+          ? mediaFile.pathRaw
+          : null,
     })
     appProxy.state.media[index].compressedFile = {
       ...(snapshot(appProxy).state.media[index].compressedFile ?? {}),
@@ -545,12 +557,23 @@ export async function saveQueueOutput(
       settings.outputFolder && settings.outputFileName
         ? settings.outputFileName
         : `${outputFilePrefix}${output.outputFileName}`
+    const preset = getStoredPreset(output.presetId)
+    const sourceExtension =
+      output.sourcePath.split('.').pop()?.toLowerCase() ?? ''
+    const preserveTimestampsFrom =
+      (inputExtensions.image as readonly string[]).includes(sourceExtension) &&
+      (preset?.mediaType === 'image'
+        ? preset.settings.shouldPreserveDates !== false
+        : true)
+        ? output.sourcePath
+        : null
     try {
       const savedPath = await moveFile(
         output.outputPath,
         `${destinationDirectory}/${fileName}`,
         {
           replaceOriginal: replaceOriginalFiles ? output.sourcePath : null,
+          preserveTimestampsFrom,
         },
       )
       return { savedPath }
@@ -562,6 +585,7 @@ export async function saveQueueOutput(
       const savedPath = await moveFile(
         output.outputPath,
         await join(await appDataDir(), 'assets', fileName),
+        { preserveTimestampsFrom },
       )
       return { savedPath }
     }

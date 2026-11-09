@@ -8,6 +8,183 @@ use tauri_plugin_fs::FsExt;
 
 use crate::core::domain::{CollectedFile, FileMetadata};
 
+/// The dates of a file: a saved output keeps the dates of the image it was compressed from
+#[derive(Clone, Copy)]
+pub struct FileTimes {
+    created: Option<SystemTime>,
+    modified: SystemTime,
+    accessed: SystemTime,
+}
+
+impl FileTimes {
+    /// `None` when the file's modification date cannot be read
+    pub fn of(path: &str) -> Option<Self> {
+        let metadata = fs::metadata(path).ok()?;
+        let modified = metadata.modified().ok()?;
+        Some(Self {
+            created: metadata.created().ok(),
+            modified,
+            accessed: metadata.accessed().unwrap_or(modified),
+        })
+    }
+}
+
+/// Gives a saved file `times`, logging (not failing the save) when the file system refuses them
+pub fn apply_file_times(path: &str, times: Option<&FileTimes>) {
+    if let Some(times) = times {
+        if let Err(err) = set_file_times(path, times) {
+            log::warn!("Could not keep the dates of {}: {}", path, err);
+        }
+    }
+}
+
+/// macOS keeps a creation date per file: set it (when the original has one) along with the
+/// modification date with `setattrlist`, which `std` has no API for
+#[cfg(target_os = "macos")]
+fn set_file_times(path: &str, times: &FileTimes) -> std::io::Result<()> {
+    use std::ffi::CString;
+
+    #[repr(C)]
+    struct AttrList {
+        bitmapcount: u16,
+        reserved: u16,
+        commonattr: u32,
+        volattr: u32,
+        dirattr: u32,
+        fileattr: u32,
+        forkattr: u32,
+    }
+
+    // ATTR_BIT_MAP_COUNT, ATTR_CMN_CRTIME & ATTR_CMN_MODTIME (attrlist.h)
+    const ATTR_BIT_MAP_COUNT: u16 = 5;
+    const ATTR_CMN_CRTIME: u32 = 0x0000_0200;
+    const ATTR_CMN_MODTIME: u32 = 0x0000_0400;
+
+    extern "C" {
+        fn setattrlist(
+            path: *const libc::c_char,
+            attr_list: *mut AttrList,
+            attr_buf: *mut libc::c_void,
+            attr_buf_len: libc::size_t,
+            options: libc::c_ulong,
+        ) -> libc::c_int;
+    }
+
+    fn timespec(time: SystemTime) -> libc::timespec {
+        match time.duration_since(time::UNIX_EPOCH) {
+            Ok(elapsed) => libc::timespec {
+                tv_sec: elapsed.as_secs() as libc::time_t,
+                tv_nsec: elapsed.subsec_nanos() as libc::c_long,
+            },
+            Err(error) => {
+                let elapsed = error.duration();
+                let mut seconds = -(elapsed.as_secs() as i64);
+                let mut nanoseconds = elapsed.subsec_nanos() as i64;
+                if nanoseconds > 0 {
+                    seconds -= 1;
+                    nanoseconds = 1_000_000_000 - nanoseconds;
+                }
+                libc::timespec {
+                    tv_sec: seconds as libc::time_t,
+                    tv_nsec: nanoseconds as libc::c_long,
+                }
+            }
+        }
+    }
+
+    let path = CString::new(path.as_bytes())
+        .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidInput, error))?;
+    let mut attributes = AttrList {
+        bitmapcount: ATTR_BIT_MAP_COUNT,
+        reserved: 0,
+        commonattr: ATTR_CMN_MODTIME,
+        volattr: 0,
+        dirattr: 0,
+        fileattr: 0,
+        forkattr: 0,
+    };
+    // Attributes are set in bit order: the creation date first, then the modification date
+    let mut buffer = Vec::with_capacity(2);
+    if let Some(created) = times.created {
+        attributes.commonattr |= ATTR_CMN_CRTIME;
+        buffer.push(timespec(created));
+    }
+    buffer.push(timespec(times.modified));
+    let length = buffer.len() * std::mem::size_of::<libc::timespec>();
+    let result = unsafe {
+        setattrlist(
+            path.as_ptr(),
+            &mut attributes,
+            buffer.as_mut_ptr() as *mut libc::c_void,
+            length,
+            0,
+        )
+    };
+    if result == 0 {
+        return Ok(());
+    }
+    // Some file systems do not keep a creation date: keep the modification date at least
+    if times.created.is_some() {
+        return set_file_times(
+            &path.to_string_lossy(),
+            &FileTimes {
+                created: None,
+                ..*times
+            },
+        );
+    }
+    Err(std::io::Error::last_os_error())
+}
+
+/// Linux cannot set a creation date: keep the modification (and access) dates
+#[cfg(all(unix, not(target_os = "macos")))]
+fn set_file_times(path: &str, times: &FileTimes) -> std::io::Result<()> {
+    filetime::set_file_times(
+        path,
+        filetime::FileTime::from_system_time(times.accessed),
+        filetime::FileTime::from_system_time(times.modified),
+    )
+}
+
+/// Windows keeps a creation date per file: set it along with the modification (and access) dates
+#[cfg(windows)]
+fn set_file_times(path: &str, times: &FileTimes) -> std::io::Result<()> {
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::Foundation::{FILETIME, HANDLE};
+    use windows_sys::Win32::Storage::FileSystem::SetFileTime;
+
+    fn filetime(time: SystemTime) -> FILETIME {
+        let ticks = time
+            .duration_since(time::UNIX_EPOCH)
+            .map(|elapsed| elapsed.as_nanos() / 100 + 116_444_736_000_000_000)
+            .unwrap_or(0) as u64;
+        FILETIME {
+            dwLowDateTime: ticks as u32,
+            dwHighDateTime: (ticks >> 32) as u32,
+        }
+    }
+
+    let file = fs::OpenOptions::new().write(true).open(path)?;
+    let created = times.created.map(filetime);
+    let accessed = filetime(times.accessed);
+    let modified = filetime(times.modified);
+    let result = unsafe {
+        SetFileTime(
+            file.as_raw_handle() as HANDLE,
+            created
+                .as_ref()
+                .map_or(std::ptr::null(), |value| value as *const FILETIME),
+            &accessed,
+            &modified,
+        )
+    };
+    if result == 0 {
+        Err(std::io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
 /// Create required .compressO directory if not exists.
 pub fn setup_app_data_dir(app: &mut tauri::App) -> Result<PathBuf, tauri::Error> {
     let scope = app.fs_scope();

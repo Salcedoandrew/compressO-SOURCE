@@ -33,17 +33,25 @@ export function getSvgDimension(imagePath: string): Promise<[number, number]> {
  */
 /**
  * Moves a file, never replacing an existing one (a numbered name is used instead), except
- * `replaceOriginal`: when `to` is that original, it is moved to the Trash & the file takes its place
+ * `replaceOriginal`: when `to` is that original, it is moved to the Trash & the file takes its place.
+ * `preserveTimestampsFrom` gives the moved file that file's creation & modification dates.
  */
 export function moveFile(
   from: string,
   to: string,
-  { replaceOriginal }: { replaceOriginal?: string | null } = {},
+  {
+    replaceOriginal,
+    preserveTimestampsFrom,
+  }: {
+    replaceOriginal?: string | null
+    preserveTimestampsFrom?: string | null
+  } = {},
 ) {
   return core.invoke<string>('move_file', {
     from,
     to,
     replaceOriginal: replaceOriginal ?? null,
+    preserveTimestampsFrom: preserveTimestampsFrom ?? null,
   })
 }
 

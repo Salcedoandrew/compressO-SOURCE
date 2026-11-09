@@ -14,6 +14,7 @@ import {
   imageConfigInitialState,
   normalizeBatchMediaConfig,
 } from '@/routes/(root)/-state'
+import type { ImageFormatQualities } from '@/types/app'
 import { slideDownTransition } from '@/utils/animation'
 import {
   getImageDynamicRangeOperation,
@@ -27,6 +28,26 @@ type CompressionQualityProps = {
 }
 
 const imageConfigInitialStateCloned = cloneDeep(imageConfigInitialState)
+
+/** The formats Alic's default profile has a quality for, in its order */
+const QUALITY_FORMATS = ['jpeg', 'png', 'webp', 'gif', 'avif'] as const
+
+/** A format's qualities with one of them changed, the others kept (or the defaults) */
+function withFormatQuality(
+  qualities: Partial<ImageFormatQualities> | undefined,
+  format: keyof ImageFormatQualities,
+  quality: number,
+  fallback: number,
+): ImageFormatQualities {
+  return {
+    jpeg: qualities?.jpeg ?? fallback,
+    png: qualities?.png ?? fallback,
+    webp: qualities?.webp ?? fallback,
+    gif: qualities?.gif ?? fallback,
+    avif: qualities?.avif ?? fallback,
+    [format]: quality,
+  }
+}
 
 /** Compresses by quality (or losslessly), or to a file size (see `TargetSize`) */
 function CompressionQuality({ mediaIndex }: CompressionQualityProps) {
@@ -95,7 +116,83 @@ function CompressionQuality({ mediaIndex }: CompressionQualityProps) {
   )
 }
 
-/** The lossless switch & the quality */
+/**
+ * A quality slider of one output format. The format's quality is kept apart from the others, so
+ * each encoder writes at the quality chosen for it (`formatQualities`, see `ImageFormatQualities`).
+ */
+function FormatQualitySlider({
+  mediaIndex,
+  format,
+  value,
+  fallbackQuality,
+  isDisabled,
+}: {
+  mediaIndex: number
+  format: keyof ImageFormatQualities
+  value: number
+  /** Quality of formats without their own, used for the others when one is changed */
+  fallbackQuality: number
+  isDisabled: boolean
+}) {
+  const { t } = useTranslation()
+
+  const setFormatQuality = useCallback(
+    (quality: number) => {
+      const { media } = appProxy.state
+      const image = mediaIndex >= 0 ? media[mediaIndex] : null
+      if (image?.type === 'image' && image.config) {
+        image.config.formatQualities = withFormatQuality(
+          image.config.formatQualities,
+          format,
+          quality,
+          fallbackQuality,
+        )
+        image.isConfigDirty = true
+      } else if (media.length > 1) {
+        const batch = appProxy.state.commonConfigForBatchCompression.imageConfig
+        batch.formatQualities = withFormatQuality(
+          batch.formatQualities,
+          format,
+          quality,
+          fallbackQuality,
+        )
+        normalizeBatchMediaConfig()
+      }
+    },
+    [mediaIndex, format, fallbackQuality],
+  )
+
+  const [quality, setQuality] = useSyncState<number>({
+    globalValue: value,
+    setGlobalValue: setFormatQuality,
+    defaultValue:
+      imageConfigInitialStateCloned.formatQualities?.[format] ??
+      imageConfigInitialStateCloned.quality,
+    debounceMs: 500,
+  })
+
+  return (
+    <Slider
+      label={t(`quality.formats.${format}`)}
+      aria-label={t(`quality.formats.${format}`)}
+      minValue={1}
+      maxValue={100}
+      className="mb-3 mt-2 mx-auto"
+      classNames={{ label: 'text-xs' }}
+      getValue={(value) => `${value}%`}
+      renderValue={() => <p className="text-primary text-xs">{quality}%</p>}
+      value={quality}
+      onChange={(value) => {
+        if (typeof value === 'number') {
+          setQuality(value)
+        }
+      }}
+      isDisabled={isDisabled}
+    />
+  )
+}
+
+/** The lossless switch & the quality of each format */
 function QualitySettings({ mediaIndex }: CompressionQualityProps) {
   const { t } = useTranslation()
   const {
@@ -113,8 +210,7 @@ function QualitySettings({ mediaIndex }: CompressionQualityProps) {
       : null
   const { config } = image ?? {}
   const settings = config ?? commonConfigForBatchCompression.imageConfig
-  const { quality: compressionQuality, isLossless: requestedLossless } =
-    settings
+  const { isLossless: requestedLossless } = settings
   const images = image ? [image] : media.filter((item) => item.type === 'image')
   const hdrPng =
     images.length > 0 &&
@@ -149,33 +245,6 @@ function QualitySettings({ mediaIndex }: CompressionQualityProps) {
     ),
   )
   const isLossless = (requestedLossless && !hdrJpeg) || hdrPng
-
-  const setQualityGlobal = useCallback(
-    (value: number) => {
-      if (
-        mediaIndex >= 0 &&
-        appProxy.state.media[mediaIndex].type === 'image' &&
-        appProxy.state.media[mediaIndex]?.config
-      ) {
-        appProxy.state.media[mediaIndex].config.quality = value
-        appProxy.state.media[mediaIndex].isConfigDirty = true
-      } else {
-        if (appProxy.state.media.length > 1) {
-          appProxy.state.commonConfigForBatchCompression.imageConfig.quality =
-            value
-          normalizeBatchMediaConfig()
-        }
-      }
-    },
-    [mediaIndex],
-  )
-
-  const [quality, setQuality] = useSyncState<number>({
-    globalValue: compressionQuality ?? undefined,
-    setGlobalValue: setQualityGlobal,
-    defaultValue: imageConfigInitialStateCloned.quality,
-    debounceMs: 500,
-  })
 
   const handleSwitchToggle = useCallback(() => {
     if (
@@ -219,49 +288,16 @@ function QualitySettings({ mediaIndex }: CompressionQualityProps) {
       <AnimatePresence mode="wait">
         {!isLossless ? (
           <motion.div {...slideDownTransition}>
-            <Slider
-              label={t('quality.title')}
-              aria-label={t('quality.title')}
-              marks={[
-                {
-                  value: 1,
-                  label: t('svg.levels.low'),
-                },
-                {
-                  value: 50,
-                  label: t('svg.levels.medium'),
-                },
-                {
-                  value: 100,
-                  label: t('svg.levels.high'),
-                },
-              ]}
-              minValue={1}
-              maxValue={100}
-              className="mb-3 mt-2 mx-auto"
-              classNames={{
-                mark: 'text-[11px] mt-2',
-                label: 'text-xs',
-              }}
-              getValue={(value) => {
-                const val = Array.isArray(value) ? value?.[0] : +value
-                return val < 50
-                  ? t('svg.levels.low')
-                  : val >= 50 && val < 99
-                    ? t('svg.levels.medium')
-                    : t('svg.levels.high')
-              }}
-              renderValue={() => (
-                <p className="text-primary text-xs">{quality}%</p>
-              )}
-              value={quality}
-              onChange={(value) => {
-                if (typeof value === 'number') {
-                  setQuality(value)
-                }
-              }}
-              isDisabled={isLossless || shouldDisableInput}
-            />
+            {QUALITY_FORMATS.map((format) => (
+              <FormatQualitySlider
+                key={format}
+                mediaIndex={mediaIndex}
+                format={format}
+                value={settings.formatQualities?.[format] ?? settings.quality}
+                fallbackQuality={settings.quality}
+                isDisabled={shouldDisableInput}
+              />
+            ))}
           </motion.div>
         ) : null}
       </AnimatePresence>

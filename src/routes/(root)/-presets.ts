@@ -10,7 +10,11 @@ import {
   presetsStore,
 } from '@/stores/presetsStore'
 import { getAudioStreams } from '@/tauri/commands/ffprobe'
-import { ImageConfig, VideoConfig } from '@/types/app'
+import type {
+  ImageConfig,
+  ImageFormatQualities,
+  VideoConfig,
+} from '@/types/app'
 import {
   type BatchResolution,
   extensions,
@@ -706,12 +710,18 @@ function getEffectiveImageSettings(
   // sizes have neither field, which is compressing by quality)
   if (settings.shouldUseTargetSize) {
     delete effective.quality
+    delete effective.formatQualities
     delete effective.isLossless
   } else {
     delete effective.shouldUseTargetSize
     delete effective.targetSizeInKB
-    if (settings.isLossless) delete effective.quality
+    if (settings.isLossless) {
+      delete effective.quality
+      delete effective.formatQualities
+    }
   }
+  // Only a color chosen for the fill changes the output
+  if (!settings.shouldFillBackground) delete effective.backgroundColor
   if (!settings.shouldEnableAdvancedSvgSetting) delete effective.svgConfig
   for (const field of skippedFields ?? []) delete effective[field]
   if ('convertToExtension' in effective) {
@@ -1354,6 +1364,17 @@ export function describeVideoPresetSettings(
   return lines
 }
 
+/** Quality the preset's output format is encoded at (see `ImageFormatQualities`) */
+function getImagePresetQuality(settings: ImagePresetSettings) {
+  const extension = settings.convertToExtension
+  const format = extension === 'jpg' ? 'jpeg' : extension
+  return (
+    (format !== '-'
+      ? settings.formatQualities?.[format as keyof ImageFormatQualities]
+      : undefined) ?? settings.quality
+  )
+}
+
 /** Short summary of what an image preset changes (see `describeVideoPresetSettings`) */
 export function describeImagePresetSettings(
   settings: ImagePresetSettings,
@@ -1369,7 +1390,9 @@ export function describeImagePresetSettings(
         })
       : settings.isLossless
         ? translate('common.lossless')
-        : translate('presets.summary.quality', { value: settings.quality }),
+        : translate('presets.summary.quality', {
+            value: getImagePresetQuality(settings),
+          }),
   )
   if (settings.resolution) {
     lines.push(

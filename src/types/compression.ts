@@ -1,5 +1,10 @@
 import { t } from '@/i18n'
-import { AudioConfig, MediaMetadataConfig, SubtitlesConfig } from './app'
+import {
+  AudioConfig,
+  ImageFormatQualities,
+  MediaMetadataConfig,
+  SubtitlesConfig,
+} from './app'
 import { FileMetadata } from './fs'
 
 export const extensions = {
@@ -482,6 +487,10 @@ export type ImageCompressionConfig = {
   convertToExtension: string
   isLossless: boolean
   quality: number
+  /** Quality of each output format; a format it does not name uses `quality` */
+  formatQualities?: ImageFormatQualities | null
+  /** `#RRGGBB` transparent areas are filled with when the output cannot hold alpha */
+  backgroundFill?: string | null
   stripMetadata: boolean
   svgScaleFactor: number | null
   svgConfig?: SvgConfig | null

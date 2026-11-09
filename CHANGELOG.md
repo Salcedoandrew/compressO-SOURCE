@@ -1,5 +1,15 @@
 # Changelog
 
+### Unreleased
+
+### 4.2.0
+
+Features:
+
+- **Per-format image quality**: JPEG, PNG, WebP, GIF and AVIF each have their own quality slider (1-100, 80 by default, as Alic's default profile), shown in the image settings and saved in image presets. Each encoder writes at the quality chosen for its format, so converting a PNG to JPEG uses the JPEG quality.
+- **Background Fill**: Choose the color transparent areas are filled with when converting an image to a format without transparency, such as JPEG (black by default). It is shown with the image's resize settings and saved in image presets.
+- **Preserve Dates**: Keep the original image's creation and modification dates on the compressed output, on by default and saved in image presets.
+
 ### 4.1.0
 
 Features:

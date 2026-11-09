@@ -918,7 +918,23 @@
     },
     "noAudio": "Không tìm thấy âm thanh"
   },
+  "backgroundFill": {
+    "title": "Tô nền",
+    "color": "Màu nền",
+    "description": "Tô các vùng trong suốt khi chuyển sang định dạng không hỗ trợ độ trong suốt, như JPEG."
+  },
+  "preserveDates": {
+    "title": "Giữ ngày",
+    "description": "Giữ nguyên ngày tạo và ngày sửa của ảnh trên tệp đã nén."
+  },
   "quality": {
+    "formats": {
+      "jpeg": "Chất lượng JPEG",
+      "png": "Chất lượng PNG",
+      "webp": "Chất lượng WEBP",
+      "gif": "Chất lượng GIF",
+      "avif": "Chất lượng AVIF"
+    },
     "unsupportedAudio": "Định dạng hoặc bộ mã hóa âm thanh đã chọn không hỗ trợ điều chỉnh chất lượng.",
     "lossless": "Nén không mất dữ liệu",
     "title": "Chất lượng"

@@ -1,7 +1,8 @@
 use crate::core::domain::{
     BatchImageCompressionProgress, CustomEvents, ImageBatchCompressionResult,
     ImageBatchIndividualCompressionResult, ImageCompressionConfig, ImageCompressionProgress,
-    ImageCompressionResult, ImageContainer, ImageTargetSize, MediaTransformHistory, SvgConfig,
+    ImageCompressionResult, ImageContainer, ImageFormatQualities, ImageTargetSize,
+    MediaTransformHistory, SvgConfig,
 };
 use crate::core::ffmpeg::build_transform_filters;
 use crate::core::ffmpeg::FFMPEG;
@@ -51,6 +52,21 @@ const TARGET_SIZE_SCALE_ROUNDS: usize = 5;
 /// The dimensions are never lowered below this longer side, in pixels
 const TARGET_SIZE_MIN_LONGER_SIDE: f64 = 320.0;
 
+/// An `#RRGGBB` (or `#RGB`) background as FFmpeg's `0xRRGGBB`; anything else is black
+fn ffmpeg_fill_color(value: &str) -> String {
+    let hex = value.trim().trim_start_matches('#');
+    let expanded = match hex.len() {
+        3 => hex.chars().flat_map(|c| [c, c]).collect::<String>(),
+        6 => hex.to_string(),
+        _ => return "black".to_string(),
+    };
+    if expanded.chars().all(|c| c.is_ascii_hexdigit()) {
+        format!("0x{expanded}")
+    } else {
+        "black".to_string()
+    }
+}
+
 /// Whether an image can be compressed to a target size: not SVGs (vector) & GIFs (animated), as
 /// input or output
 pub fn supports_target_size(input_path: &str, convert_to_extension: &str) -> bool {
@@ -62,6 +78,34 @@ pub fn supports_target_size(input_path: &str, convert_to_extension: &str) -> boo
 #[cfg(test)]
 mod webp_tests {
     use super::*;
+
+    #[test]
+    fn format_qualities_follow_the_output_format() {
+        let qualities = ImageFormatQualities {
+            jpeg: 10,
+            png: 20,
+            webp: 30,
+            gif: 40,
+            avif: 50,
+        };
+        assert_eq!(qualities.for_extension("jpg"), 10);
+        assert_eq!(qualities.for_extension("jpeg"), 10);
+        assert_eq!(qualities.for_extension("png"), 20);
+        assert_eq!(qualities.for_extension("webp"), 30);
+        assert_eq!(qualities.for_extension("gif"), 40);
+        assert_eq!(qualities.for_extension("avif"), 50);
+        assert_eq!(qualities.for_extension("jxl"), 10);
+        assert_eq!(ImageFormatQualities::uniform(70).for_extension("png"), 70);
+    }
+
+    #[test]
+    fn background_fill_colors_are_ffmpeg_colors() {
+        assert_eq!(ffmpeg_fill_color("#000000"), "0x000000");
+        assert_eq!(ffmpeg_fill_color("ffffff"), "0xffffff");
+        assert_eq!(ffmpeg_fill_color("#abc"), "0xaabbcc");
+        assert_eq!(ffmpeg_fill_color(""), "black");
+        assert_eq!(ffmpeg_fill_color("not-a-color"), "black");
+    }
 
     struct Fixture(PathBuf);
 
@@ -299,6 +343,8 @@ impl ImageCompressor {
         svg_scale_factor: Option<f32>,
         is_lossless: Option<bool>,
         quality: u8,
+        format_qualities: Option<ImageFormatQualities>,
+        background_fill: Option<&str>,
         image_id: &str,
         batch_id: Option<&str>,
         strip_metadata: Option<bool>,
@@ -320,6 +366,13 @@ impl ImageCompressor {
             convert_to_extension
         };
         let output_extension = convert_to_extension;
+
+        // Alic's per-format qualities: each encoder uses the quality of the format it writes
+        let quality_for = |extension: &str| {
+            format_qualities
+                .map(|qualities| qualities.for_extension(extension))
+                .unwrap_or(quality)
+        };
 
         // HDR PNG must never go through pngquant (8-bit palette quantization). It can
         // still be optimized losslessly and resized with the high-precision filters.
@@ -350,7 +403,7 @@ impl ImageCompressor {
                 image_id,
                 batch_id.unwrap_or(image_id),
                 true,
-                quality,
+                quality_for("png"),
             )
             .await?;
             super::image_codecs::preserve_png_color(source, &output)?;
@@ -382,6 +435,8 @@ impl ImageCompressor {
                     svg_scale_factor,
                     is_lossless,
                     quality,
+                    format_qualities,
+                    background_fill,
                     image_id,
                     batch_id,
                     strip_metadata,
@@ -535,7 +590,7 @@ impl ImageCompressor {
                     image_id,
                     batch_id.as_str(),
                     is_lossless.unwrap_or(true),
-                    quality,
+                    quality_for("png"),
                 )
                 .await?
             }
@@ -546,7 +601,7 @@ impl ImageCompressor {
                     image_id,
                     batch_id.as_str(),
                     is_lossless.unwrap_or(true),
-                    quality,
+                    quality_for("jpeg"),
                 )
                 .await?
             }
@@ -555,7 +610,7 @@ impl ImageCompressor {
                     &transform_input_path,
                     compression_output_path.to_str().unwrap(),
                     is_lossless.unwrap_or(true),
-                    quality,
+                    quality_for("webp"),
                 )
                 .await?
             }
@@ -566,7 +621,7 @@ impl ImageCompressor {
                     image_id,
                     batch_id.as_str(),
                     is_lossless.unwrap_or(true),
-                    quality,
+                    quality_for("gif"),
                     dimensions,
                 )
                 .await?
@@ -575,7 +630,7 @@ impl ImageCompressor {
                 self.compress_avif(
                     &transform_input_path,
                     compression_output_path.to_str().unwrap(),
-                    quality,
+                    quality_for("avif"),
                 )
                 .await?
             }
@@ -632,6 +687,7 @@ impl ImageCompressor {
                                     &temp_png_path,
                                     "png",
                                     100, // full quality
+                                    None,
                                 )
                                 .await
                             {
@@ -658,7 +714,7 @@ impl ImageCompressor {
                         self.compress_avif(
                             compression_output_path.to_str().unwrap(),
                             output_path.to_str().unwrap(),
-                            quality,
+                            quality_for("avif"),
                         )
                         .await?;
                     } else {
@@ -666,7 +722,8 @@ impl ImageCompressor {
                             compression_output_path.to_str().unwrap(),
                             output_path.to_str().unwrap(),
                             output_extension,
-                            quality,
+                            quality_for(output_extension),
+                            background_fill,
                         )
                         .await?;
                     }
@@ -683,7 +740,7 @@ impl ImageCompressor {
                         svg_scale_factor,
                     )?;
                     let avif_result = self
-                        .compress_avif(&temp_png_path, output_path.to_str().unwrap(), quality)
+                        .compress_avif(&temp_png_path, output_path.to_str().unwrap(), quality_for("avif"))
                         .await;
                     let _ = fs::remove_file(&temp_png_path);
                     avif_result?;
@@ -902,6 +959,7 @@ impl ImageCompressor {
             config.dimensions,
             config.is_lossless,
             config.quality,
+            config.format_qualities,
         )
         .await
     }
@@ -913,6 +971,7 @@ impl ImageCompressor {
         dimensions: Option<(f64, f64)>,
         lossless: Option<bool>,
         quality: u8,
+        format_qualities: Option<ImageFormatQualities>,
     ) -> Result<ImageCompressionResult, String> {
         if let Some(base) = &config.hdr_jpeg_base_path {
             if lossless.unwrap_or(false) {
@@ -946,7 +1005,9 @@ impl ImageCompressor {
                     &inputs[0],
                     &inputs[1],
                     &destination,
-                    quality,
+                    format_qualities
+                        .map(|qualities| qualities.jpeg)
+                        .unwrap_or(quality),
                     strip_metadata,
                 )
             })
@@ -966,6 +1027,8 @@ impl ImageCompressor {
             config.svg_scale_factor,
             lossless,
             quality,
+            format_qualities,
+            config.background_fill.as_deref(),
             &config.image_id,
             batch_id,
             config.strip_metadata,
@@ -1213,6 +1276,7 @@ impl ImageCompressor {
                 // A lossless output cannot be made smaller by its quality
                 Some(false),
                 quality,
+                None,
             )
             .await?;
         let output = PathBuf::from(&result.file_path);
@@ -1496,6 +1560,8 @@ impl ImageCompressor {
         svg_scale: Option<f32>,
         lossless: Option<bool>,
         quality: u8,
+        format_qualities: Option<ImageFormatQualities>,
+        background_fill: Option<&str>,
         image_id: &str,
         batch_id: Option<&str>,
         strip_metadata: Option<bool>,
@@ -1566,6 +1632,8 @@ impl ImageCompressor {
                 svg_scale,
                 lossless,
                 quality,
+                format_qualities,
+                background_fill,
                 image_id,
                 batch_id,
                 strip_metadata,
@@ -1990,6 +2058,7 @@ impl ImageCompressor {
         output_path: &str,
         output_format: &str,
         quality: u8,
+        background_fill: Option<&str>,
     ) -> Result<(), String> {
         if !PathBuf::from(input_path).exists() {
             return Err(String::from("Input image file does not exist."));
@@ -2011,10 +2080,12 @@ impl ImageCompressor {
                 cmd_args.push("-q:v".to_string()); // 1-31 scale (lower is better) but we'll interpolate between 1-10 only
                 cmd_args.push(jpeg_qscale.to_string());
                 cmd_args.push("-filter_complex".to_string());
-                cmd_args.push(
-                    "color=black:s=1x1[bg];[bg][0:v]scale2ref[bg][img];[bg][img]overlay[out]"
-                        .to_string(),
-                );
+                let fill = background_fill
+                    .map(ffmpeg_fill_color)
+                    .unwrap_or_else(|| "black".to_string());
+                cmd_args.push(format!(
+                    "color={fill}:s=1x1[bg];[bg][0:v]scale2ref[bg][img];[bg][img]overlay[out]"
+                ));
                 cmd_args.push("-map".to_string());
                 cmd_args.push("[out]".to_string());
                 cmd_args.push("-frames:v".to_string());

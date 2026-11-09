@@ -932,7 +932,23 @@
     },
     "noAudio": "Ses bulunamadı"
   },
+  "backgroundFill": {
+    "title": "Arka Plan Doldurma",
+    "color": "Arka Plan Rengi",
+    "description": "JPEG gibi saydamlığı desteklemeyen bir biçime dönüştürürken saydam alanları doldurur."
+  },
+  "preserveDates": {
+    "title": "Tarihleri Koru",
+    "description": "Görselin özgün oluşturma ve değiştirme tarihlerini sıkıştırılmış dosyada korur."
+  },
   "quality": {
+    "formats": {
+      "jpeg": "JPEG Kalitesi",
+      "png": "PNG Kalitesi",
+      "webp": "WEBP Kalitesi",
+      "gif": "GIF Kalitesi",
+      "avif": "AVIF Kalitesi"
+    },
     "unsupportedAudio": "Seçilen ses biçimi veya kodlayıcı kalite ayarını desteklemiyor.",
     "lossless": "Kayıpsız Sıkıştırma",
     "title": "Kalite"

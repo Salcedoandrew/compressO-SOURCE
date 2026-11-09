@@ -918,7 +918,23 @@
     },
     "noAudio": "Audio tidak ditemukan"
   },
+  "backgroundFill": {
+    "title": "Isi Latar Belakang",
+    "color": "Warna Latar Belakang",
+    "description": "Mengisi area transparan saat mengonversi ke format tanpa transparansi, seperti JPEG."
+  },
+  "preserveDates": {
+    "title": "Pertahankan Tanggal",
+    "description": "Mempertahankan tanggal pembuatan dan modifikasi asli gambar pada file terkompresi."
+  },
   "quality": {
+    "formats": {
+      "jpeg": "Kualitas JPEG",
+      "png": "Kualitas PNG",
+      "webp": "Kualitas WEBP",
+      "gif": "Kualitas GIF",
+      "avif": "Kualitas AVIF"
+    },
     "unsupportedAudio": "Format atau codec audio yang dipilih tidak mendukung penyesuaian kualitas.",
     "lossless": "Kompresi Lossless",
     "title": "Kualitas"

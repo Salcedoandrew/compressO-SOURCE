@@ -609,6 +609,12 @@ export function getMediaItemConfig(
             imagePath: v.pathRaw!,
             isLossless: imageIsLossless,
             quality: imageIsLossless ? 100 : (v.config.quality ?? 100),
+            formatQualities: imageIsLossless
+              ? null
+              : (v.config.formatQualities ?? null),
+            backgroundFill: v.config.shouldFillBackground
+              ? (v.config.backgroundColor ?? '#000000')
+              : null,
             stripMetadata: v.config.shouldStripMetadata,
             svgScaleFactor: v.config.svgScaleFactor ?? null,
             svgConfig: v.config?.shouldEnableAdvancedSvgSetting
