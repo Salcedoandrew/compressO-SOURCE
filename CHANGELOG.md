@@ -2,6 +2,12 @@
 
 ### Unreleased
 
+### 4.2.2
+
+Bug Fixes:
+
+- Fixed in-app updates failing the signature check: the app now embeds the public key that matches the release signing key. Versions 4.2.0 and 4.2.1 need a one-time manual install of 4.2.2, after which in-app updates work normally.
+
 ### 4.2.1
 
 Bug Fixes:

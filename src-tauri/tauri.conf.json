@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "CompressO",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "identifier": "com.compresso.app",
   "build": {
     "beforeBuildCommand": "node scripts/prepare-tools.mjs && node scripts/build-cli.mjs && pnpm vite:build",
@@ -201,7 +201,7 @@
         "https://github.com/Salcedoandrew/compressO-SOURCE/releases/latest/download/latest.json"
       ],
       "dialog": false,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZDRjIzRTAxQzc1Njc4RjgKUldUNGVGYkhBVDd5YkJNejh2aHlOeS9XekFOcUlxUXhIYlBLS1ZLdHJzVW4zRVE1QUhUUjZOd0QK"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFGRjAzMUEzQTQ0MDdEMkMKUldRc2ZVQ2tvekh3SHc3MXpaREQzdUVWRWRsOE0xR3htbFduU0pQWU1PejJibExpU2IyR3EyYk8K"
     }
   },
   "app": {
